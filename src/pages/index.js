@@ -1,115 +1,234 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { useState, useEffect } from 'react';
+import Head from 'next/head';
+import { 
+  CubeIcon, 
+  ShoppingBagIcon, 
+  UsersIcon, 
+  CurrencyDollarIcon,
+  TrendingUpIcon,
+  TrendingDownIcon
+} from '@heroicons/react/24/outline';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { adminAPI, ordersAPI } from '@/lib/api';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export default function Home() {
-  return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/pages/index.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+const StatCard = ({ title, value, change, changeType, icon: Icon, color }) => (
+  <div className="bg-white overflow-hidden shadow rounded-lg">
+    <div className="p-5">
+      <div className="flex items-center">
+        <div className="flex-shrink-0">
+          <Icon className={`h-6 w-6 text-${color}-600`} aria-hidden="true" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="ml-5 w-0 flex-1">
+          <dl>
+            <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
+            <dd className="flex items-baseline">
+              <div className="text-2xl font-semibold text-gray-900">{value}</div>
+              {change && (
+                <div className={`ml-2 flex items-baseline text-sm font-semibold ${
+                  changeType === 'increase' ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {changeType === 'increase' ? (
+                    <TrendingUpIcon className="self-center flex-shrink-0 h-4 w-4" />
+                  ) : (
+                    <TrendingDownIcon className="self-center flex-shrink-0 h-4 w-4" />
+                  )}
+                  <span className="ml-1">{change}</span>
+                </div>
+              )}
+            </dd>
+          </dl>
+        </div>
+      </div>
     </div>
+  </div>
+);
+
+export default function Dashboard() {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [orderStats, setOrderStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch dashboard overview
+      const [dashboardResponse, statsResponse] = await Promise.all([
+        adminAPI.getDashboard(),
+        ordersAPI.getStats({ groupBy: 'day' })
+      ]);
+
+      setDashboardData(dashboardResponse.data);
+      setOrderStats(statsResponse.data);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  const stats = [
+    {
+      title: 'Total Products',
+      value: dashboardData?.productsCount || 0,
+      change: '+12%',
+      changeType: 'increase',
+      icon: CubeIcon,
+      color: 'blue'
+    },
+    {
+      title: 'Total Orders',
+      value: dashboardData?.ordersCount || 0,
+      change: '+8%',
+      changeType: 'increase',
+      icon: ShoppingBagIcon,
+      color: 'green'
+    },
+    {
+      title: 'Total Users',
+      value: dashboardData?.usersCount || 0,
+      change: '+5%',
+      changeType: 'increase',
+      icon: UsersIcon,
+      color: 'purple'
+    },
+    {
+      title: 'Total Revenue',
+      value: formatCurrency(dashboardData?.totalRevenue || 0),
+      change: '+15%',
+      changeType: 'increase',
+      icon: CurrencyDollarIcon,
+      color: 'yellow'
+    }
+  ];
+
+  // Sample chart data (in real app, this would come from API)
+  const chartData = [
+    { name: 'Jan', orders: 400, revenue: 2400 },
+    { name: 'Feb', orders: 300, revenue: 1398 },
+    { name: 'Mar', orders: 200, revenue: 9800 },
+    { name: 'Apr', orders: 278, revenue: 3908 },
+    { name: 'May', orders: 189, revenue: 4800 },
+    { name: 'Jun', orders: 239, revenue: 3800 },
+  ];
+
+  return (
+    <>
+      <Head>
+        <title>Dashboard - E° ENOT Admin</title>
+      </Head>
+
+      <div className="space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+          <p className="mt-2 text-sm text-gray-700">
+            Welcome to the E° ENOT admin panel. Here's what's happening with your store today.
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat, index) => (
+            <StatCard key={index} {...stat} />
+          ))}
+        </div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Orders Chart */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Orders Overview</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="orders" fill="#3B82F6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Revenue Chart */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Revenue Trend</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="px-4 py-5 sm:px-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">Recent Activity</h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">Latest orders and updates</p>
+          </div>
+          <ul className="divide-y divide-gray-200">
+            {dashboardData?.recentOrders?.slice(0, 5).map((order) => (
+              <li key={order.id} className="px-4 py-4 sm:px-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <ShoppingBagIcon className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        Order #{order.orderNumber}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {order.user?.firstName} {order.user?.lastName} • {formatRelativeTime(order.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="text-sm text-gray-900 mr-4">
+                      {formatCurrency(order.total)}
+                    </div>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                      order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                      order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
+              </li>
+            )) || (
+              <li className="px-4 py-4 sm:px-6 text-center text-gray-500">
+                No recent orders
+              </li>
+            )}
+          </ul>
+        </div>
+      </div>
+    </>
   );
 }
