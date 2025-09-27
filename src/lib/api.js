@@ -27,10 +27,18 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Only redirect to login on 401 if we're not already on login page
+    // and if it's not the /auth/me endpoint (which is expected to fail when not logged in)
     if (error.response?.status === 401) {
-      // Redirect to login if unauthorized
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+      const isAuthMeRequest = error.config?.url?.includes('/auth/me');
+      const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login';
+      
+      // Don't redirect if we're checking auth status or already on login page
+      if (!isAuthMeRequest && !isLoginPage) {
+        console.log('401 unauthorized, redirecting to login');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);

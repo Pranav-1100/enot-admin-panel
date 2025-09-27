@@ -5,8 +5,8 @@ import {
   ShoppingBagIcon, 
   UsersIcon, 
   CurrencyDollarIcon,
-  TrendingUpIcon,
-  TrendingDownIcon
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon
 } from '@heroicons/react/24/outline';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { adminAPI, ordersAPI } from '@/lib/api';
@@ -30,9 +30,9 @@ const StatCard = ({ title, value, change, changeType, icon: Icon, color }) => (
                   changeType === 'increase' ? 'text-green-600' : 'text-red-600'
                 }`}>
                   {changeType === 'increase' ? (
-                    <TrendingUpIcon className="self-center flex-shrink-0 h-4 w-4" />
+                    <ArrowTrendingUpIcon className="self-center flex-shrink-0 h-4 w-4" />
                   ) : (
-                    <TrendingDownIcon className="self-center flex-shrink-0 h-4 w-4" />
+                    <ArrowTrendingDownIcon className="self-center flex-shrink-0 h-4 w-4" />
                   )}
                   <span className="ml-1">{change}</span>
                 </div>
