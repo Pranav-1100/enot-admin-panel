@@ -50,7 +50,7 @@ const initialState = {
   isAuthenticated: false,
   loading: true,
   error: null,
-  initialized: false // Add this to track if initial auth check is complete
+  initialized: false
 };
 
 // Auth Provider Component
@@ -66,26 +66,41 @@ export function AuthProvider({ children }) {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
       
-      // Try to get current user
+      console.log('Checking authentication status...');
+      
+      // Add small delay to ensure any pending authentication is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const response = await authAPI.getMe();
       
-      console.log('Auth check response:', response.data); // Debug log
+      console.log('Auth check response:', response.data);
       
+      // Handle different possible response structures
+      let user = null;
       if (response.data?.user) {
-        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: response.data.user });
+        user = response.data.user;
       } else if (response.data?.success && response.data?.data?.user) {
-        // Handle different response structure
-        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: response.data.data.user });
+        user = response.data.data.user;
+      } else if (response.data?.data && typeof response.data.data === 'object') {
+        user = response.data.data;
+      }
+      
+      if (user) {
+        console.log('User authenticated:', user);
+        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: user });
       } else {
-        // No user found, but request was successful
+        console.log('No user found in response');
         dispatch({ type: AUTH_ACTIONS.SET_USER, payload: null });
       }
     } catch (error) {
-      console.log('Auth check failed:', error.response?.status, error.message);
+      console.log('Auth check failed:', {
+        status: error.response?.status,
+        message: error.message,
+        url: error.config?.url
+      });
       
-      // Only set error if it's not a 401 (unauthorized)
-      // 401 just means user is not logged in
-      if (error.response?.status !== 401) {
+      // Only set error if it's not a 401 (unauthorized) or network error
+      if (error.response?.status !== 401 && !error.message.includes('Network Error')) {
         console.error('Auth check error:', error);
         dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: 'Authentication check failed' });
       } else {
@@ -98,28 +113,46 @@ export function AuthProvider({ children }) {
   const login = async (credentials) => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      console.log('Attempting login for:', credentials.email);
+      
       const response = await authAPI.login(credentials);
       
-      console.log('Login response:', response.data); // Debug log
+      console.log('Login response:', response.data);
       
+      // Handle different possible response structures
+      let user = null;
       if (response.data?.success && response.data?.data?.user) {
-        const user = response.data.data.user;
-        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: user });
-        return { success: true, user };
+        user = response.data.data.user;
       } else if (response.data?.user) {
-        // Handle different response structure
-        const user = response.data.user;
+        user = response.data.user;
+      } else if (response.data?.data && typeof response.data.data === 'object') {
+        user = response.data.data;
+      }
+      
+      if (user) {
+        console.log('Login successful for user:', user);
         dispatch({ type: AUTH_ACTIONS.SET_USER, payload: user });
+        
+        // Small delay to ensure state is updated before redirect
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         return { success: true, user };
       } else {
         throw new Error('Login failed - Invalid response format');
       }
     } catch (error) {
-      console.error('Login error:', error); // Debug log
+      console.error('Login error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      
       const errorMessage = error.response?.data?.error?.message || 
                           error.response?.data?.message || 
+                          error.response?.data?.error ||
                           error.message || 
                           'Login failed';
+      
       dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       return { success: false, error: errorMessage };
     }
@@ -127,11 +160,19 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
+      console.log('Logging out...');
       await authAPI.logout();
     } catch (error) {
       console.error('Logout error:', error);
       // Continue with logout even if API call fails
     }
+    
+    // Clear any stored tokens
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('authToken');
+    }
+    
     dispatch({ type: AUTH_ACTIONS.LOGOUT });
   };
 
@@ -139,15 +180,24 @@ export function AuthProvider({ children }) {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
       const response = await authAPI.switchRole(userType);
+      
+      let user = null;
       if (response.data?.user) {
-        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: response.data.user });
-        return { success: true };
+        user = response.data.user;
       } else if (response.data?.data?.user) {
-        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: response.data.data.user });
+        user = response.data.data.user;
+      }
+      
+      if (user) {
+        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: user });
         return { success: true };
+      } else {
+        throw new Error('Role switch failed - Invalid response');
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.error?.message || 'Role switch failed';
+      const errorMessage = error.response?.data?.error?.message || 
+                          error.response?.data?.message ||
+                          'Role switch failed';
       dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       return { success: false, error: errorMessage };
     }

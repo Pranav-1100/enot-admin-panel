@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    swcMinify: true,
     
     // Environment variables
     env: {
@@ -14,22 +13,21 @@ const nextConfig = {
       domains: [
         'localhost',
         '127.0.0.1',
-        // Add your backend domain here when deploying
-        // 'your-backend-domain.com'
+        'enot.trou.hackclub.app'
       ],
       formats: ['image/webp', 'image/avif'],
     },
   
-    // API rewrites for development
+    // API rewrites for proxy approach
     async rewrites() {
       return [
         {
           source: '/api/:path*',
-          destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/:path*`,
+          destination: 'https://enot.trou.hackclub.app/api/:path*',
         },
         {
           source: '/auth/:path*',
-          destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/:path*`,
+          destination: 'https://enot.trou.hackclub.app/auth/:path*',
         },
       ];
     },
@@ -59,33 +57,21 @@ const nextConfig = {
   
     // Webpack configuration for file handling
     webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-      // Handle SVG files
       config.module.rules.push({
         test: /\.svg$/i,
         use: ['@svgr/webpack'],
       });
-  
       return config;
-    },
-  
-    // Experimental features
-    experimental: {
-      // Enable SWC minification
-      swcMinify: true,
     },
   
     // Compiler options
     compiler: {
-      // Remove console.log in production
       removeConsole: process.env.NODE_ENV === 'production',
     },
   
     // Output configuration
     output: 'standalone',
-  
-    // Performance optimizations
     poweredByHeader: false,
-    compress: true,
   
     // Redirects
     async redirects() {
