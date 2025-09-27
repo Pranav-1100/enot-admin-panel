@@ -23,7 +23,11 @@ export default function BrandsIndex() {
         includeInactive: true,
         search: searchQuery 
       });
-      setBrands(response.data.brands || []);
+      
+      console.log('Brands API response:', response.data); // Debug log
+      
+      // Fix: Access the correct path for brands data
+      setBrands(response.data.data || response.data.brands || []);
     } catch (error) {
       console.error('Error fetching brands:', error);
     } finally {
@@ -66,11 +70,12 @@ export default function BrandsIndex() {
           createdBrand = { id: brand.id };
         } else {
           const response = await brandsAPI.create(formData);
-          createdBrand = response.data.brand;
+          // Fix: Handle different response structures
+          createdBrand = response.data.brand || response.data.data || response.data;
         }
 
         // Upload logo if provided
-        if (logoFile) {
+        if (logoFile && createdBrand.id) {
           const logoFormData = new FormData();
           logoFormData.append('logo', logoFile);
           await brandsAPI.uploadLogo(createdBrand.id, logoFormData);
@@ -306,13 +311,13 @@ export default function BrandsIndex() {
 
                   <div className="mt-4 flex items-center justify-between">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      getStatusColor(brand.isActive ? 'active' : 'inactive')
+                      getStatusColor(brand.isActive !== false ? 'active' : 'inactive')
                     }`}>
-                      {brand.isActive ? 'Active' : 'Inactive'}
+                      {brand.isActive !== false ? 'Active' : 'Inactive'}
                     </span>
 
                     <div className="text-xs text-gray-500">
-                      {brand.productsCount || 0} products
+                      {brand.productCount || brand.productsCount || 0} products
                     </div>
                   </div>
 
