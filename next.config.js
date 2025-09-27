@@ -20,17 +20,17 @@ const nextConfig = {
   
     // API rewrites for proxy approach
     async rewrites() {
-      return [
-        {
-          source: '/api/:path*',
-          destination: 'https://enot.trou.hackclub.app/api/:path*',
-        },
-        {
-          source: '/auth/:path*',
-          destination: 'https://enot.trou.hackclub.app/auth/:path*',
-        },
-      ];
-    },
+        return [
+          {
+            source: '/api/:path*',
+            destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/:path*`,
+          },
+          {
+            source: '/auth/:path*',
+            destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/:path*`,
+          },
+        ];
+      },
   
     // Headers for CORS and security
     async headers() {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useAuth } from '@/hooks/useAuth';
+import { TokenManager } from '@/lib/api';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
@@ -15,6 +16,43 @@ export default function Login() {
   const [localError, setLocalError] = useState('');
   const { login, isAuthenticated, user, error } = useAuth();
   const router = useRouter();
+
+  // Handle Google OAuth callback with tokens in URL
+  useEffect(() => {
+    const handleOAuthCallback = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const error = urlParams.get('error');
+
+      if (error) {
+        setLocalError(decodeURIComponent(error));
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+
+      if (accessToken && refreshToken) {
+        console.log('OAuth tokens received, storing...');
+        
+        // Store tokens
+        TokenManager.setTokens({
+          accessToken,
+          refreshToken,
+          tokenType: 'Bearer'
+        });
+
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // Redirect to dashboard
+        router.replace('/');
+        return;
+      }
+    };
+
+    handleOAuthCallback();
+  }, [router]);
 
   useEffect(() => {
     // Only redirect if fully authenticated and user has admin/seller role
@@ -61,8 +99,12 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    // Redirect to Google OAuth endpoint
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/google`;
+    // Option 1: Redirect to Google OAuth endpoint that returns tokens in URL
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    
+    // Redirect to Google OAuth with callback URL that includes tokens
+    window.location.href = `${baseUrl}/auth/google?redirect=${encodeURIComponent(currentOrigin + '/login')}`;
   };
 
   // Don't render the form if user is authenticated and has proper role
@@ -99,7 +141,8 @@ export default function Login() {
             <button
               onClick={handleGoogleLogin}
               type="button"
-              className="group relative w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -107,7 +150,7 @@ export default function Login() {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              Continue with Google
+              {isLoading ? 'Signing in...' : 'Continue with Google'}
             </button>
 
             <div className="relative">
@@ -137,7 +180,8 @@ export default function Login() {
                     name="email"
                     type="email"
                     required
-                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                    disabled={isLoading}
+                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
                     placeholder="Enter your email"
                     value={formData.email}
                     onChange={handleChange}
@@ -154,14 +198,16 @@ export default function Login() {
                       name="password"
                       type={showPassword ? 'text' : 'password'}
                       required
-                      className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                      disabled={isLoading}
+                      className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
                       placeholder="Enter your password"
                       value={formData.password}
                       onChange={handleChange}
                     />
                     <button
                       type="button"
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      disabled={isLoading}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center disabled:cursor-not-allowed"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (

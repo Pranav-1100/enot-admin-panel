@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
-import { authAPI } from '@/lib/api';
+import { authAPI, TokenManager } from '@/lib/api';
 
 // Auth Context
 const AuthContext = createContext();
@@ -10,7 +10,8 @@ const AUTH_ACTIONS = {
   SET_USER: 'SET_USER',
   SET_ERROR: 'SET_ERROR',
   LOGOUT: 'LOGOUT',
-  SET_INITIALIZED: 'SET_INITIALIZED'
+  SET_INITIALIZED: 'SET_INITIALIZED',
+  SET_TOKENS: 'SET_TOKENS'
 };
 
 // Auth Reducer
@@ -35,10 +36,13 @@ function authReducer(state, action) {
         isAuthenticated: false, 
         loading: false, 
         error: null, 
-        initialized: true 
+        initialized: true,
+        tokens: null
       };
     case AUTH_ACTIONS.SET_INITIALIZED:
       return { ...state, initialized: true, loading: false };
+    case AUTH_ACTIONS.SET_TOKENS:
+      return { ...state, tokens: action.payload };
     default:
       return state;
   }
@@ -50,7 +54,8 @@ const initialState = {
   isAuthenticated: false,
   loading: true,
   error: null,
-  initialized: false
+  initialized: false,
+  tokens: null
 };
 
 // Auth Provider Component
@@ -67,6 +72,29 @@ export function AuthProvider({ children }) {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
       
       console.log('Checking authentication status...');
+      
+      // Check if we have tokens
+      const accessToken = TokenManager.getAccessToken();
+      const refreshToken = TokenManager.getRefreshToken();
+      
+      if (!accessToken) {
+        console.log('No access token found');
+        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: null });
+        return;
+      }
+      
+      // Check if token is expired
+      if (TokenManager.isTokenExpired()) {
+        console.log('Token expired, attempting refresh...');
+        try {
+          await authAPI.refreshToken();
+        } catch (error) {
+          console.log('Token refresh failed:', error);
+          TokenManager.clearTokens();
+          dispatch({ type: AUTH_ACTIONS.SET_USER, payload: null });
+          return;
+        }
+      }
       
       // Add small delay to ensure any pending authentication is complete
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -88,6 +116,7 @@ export function AuthProvider({ children }) {
       if (user) {
         console.log('User authenticated:', user);
         dispatch({ type: AUTH_ACTIONS.SET_USER, payload: user });
+        dispatch({ type: AUTH_ACTIONS.SET_TOKENS, payload: { accessToken, refreshToken } });
       } else {
         console.log('No user found in response');
         dispatch({ type: AUTH_ACTIONS.SET_USER, payload: null });
@@ -105,6 +134,10 @@ export function AuthProvider({ children }) {
         dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: 'Authentication check failed' });
       } else {
         // User is not authenticated, but that's not an error
+        // Clear any stored tokens on 401
+        if (error.response?.status === 401) {
+          TokenManager.clearTokens();
+        }
         dispatch({ type: AUTH_ACTIONS.SET_USER, payload: null });
       }
     }
@@ -119,23 +152,39 @@ export function AuthProvider({ children }) {
       
       console.log('Login response:', response.data);
       
-      // Handle different possible response structures
+      // Handle new JWT response format
       let user = null;
-      if (response.data?.success && response.data?.data?.user) {
-        user = response.data.data.user;
+      let tokens = null;
+      
+      if (response.data?.success && response.data?.data) {
+        const responseData = response.data.data;
+        user = responseData.user;
+        tokens = responseData.tokens;
       } else if (response.data?.user) {
         user = response.data.user;
-      } else if (response.data?.data && typeof response.data.data === 'object') {
-        user = response.data.data;
+        // Look for tokens in different possible locations
+        tokens = response.data.tokens || response.data.data?.tokens;
       }
       
-      if (user) {
+      if (user && tokens) {
         console.log('Login successful for user:', user);
+        console.log('Tokens received:', { 
+          hasAccessToken: !!tokens.accessToken, 
+          hasRefreshToken: !!tokens.refreshToken 
+        });
+        
+        // Tokens are already stored by the API layer, but update state
         dispatch({ type: AUTH_ACTIONS.SET_USER, payload: user });
+        dispatch({ type: AUTH_ACTIONS.SET_TOKENS, payload: tokens });
         
         // Small delay to ensure state is updated before redirect
         await new Promise(resolve => setTimeout(resolve, 100));
         
+        return { success: true, user };
+      } else if (user) {
+        // User returned but no tokens - might be old format
+        console.log('Login successful but no tokens found in response');
+        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: user });
         return { success: true, user };
       } else {
         throw new Error('Login failed - Invalid response format');
@@ -161,18 +210,13 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       console.log('Logging out...');
-      await authAPI.logout();
+      await authAPI.logout(); // This will clear tokens in the API layer
     } catch (error) {
       console.error('Logout error:', error);
       // Continue with logout even if API call fails
     }
     
-    // Clear any stored tokens
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('authToken');
-      sessionStorage.removeItem('authToken');
-    }
-    
+    // Clear state
     dispatch({ type: AUTH_ACTIONS.LOGOUT });
   };
 
@@ -203,13 +247,26 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const refreshTokens = async () => {
+    try {
+      const tokens = await authAPI.refreshToken();
+      dispatch({ type: AUTH_ACTIONS.SET_TOKENS, payload: tokens });
+      return tokens;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       ...state,
       login,
       logout,
       switchRole,
-      checkAuth
+      checkAuth,
+      refreshTokens
     }}>
       {children}
     </AuthContext.Provider>

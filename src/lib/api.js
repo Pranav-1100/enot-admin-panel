@@ -5,7 +5,7 @@ const API_URL = '';
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
+  // Remove withCredentials since we're using JWT tokens now
   timeout: 30000, // 30 second timeout
   headers: {
     'Content-Type': 'application/json',
@@ -13,18 +13,61 @@ const api = axios.create({
   },
 });
 
-// Add request interceptor to handle auth token if available
+// Token management utilities
+const TokenManager = {
+  getAccessToken: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('accessToken');
+    }
+    return null;
+  },
+  
+  getRefreshToken: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('refreshToken');
+    }
+    return null;
+  },
+  
+  setTokens: (tokens) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('accessToken', tokens.accessToken);
+      localStorage.setItem('refreshToken', tokens.refreshToken);
+      if (tokens.expiresIn) {
+        const expiryTime = Date.now() + (tokens.expiresIn * 1000);
+        localStorage.setItem('tokenExpiry', expiryTime.toString());
+      }
+    }
+  },
+  
+  clearTokens: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('tokenExpiry');
+    }
+  },
+  
+  isTokenExpired: () => {
+    if (typeof window !== 'undefined') {
+      const expiry = localStorage.getItem('tokenExpiry');
+      if (expiry) {
+        return Date.now() > parseInt(expiry);
+      }
+    }
+    return false;
+  }
+};
+
+// Request interceptor to add Authorization header
 api.interceptors.request.use(
   (config) => {
-    // Add debug logging
     console.log(`Making ${config.method?.toUpperCase()} request to: ${config.baseURL}${config.url}`);
     
-    // If there's a stored auth token, add it to headers
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    // Add Authorization header with JWT token
+    const token = TokenManager.getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     
     return config;
@@ -35,18 +78,30 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor with better error handling
+// Flag to prevent multiple refresh attempts
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
+
+// Response interceptor with JWT token refresh logic
 api.interceptors.response.use(
   (response) => {
-    // Store auth token if provided in response
-    if (response.data?.token) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('authToken', response.data.token);
-      }
-    }
     return response;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     console.error('API Error:', {
       url: error.config?.url,
       method: error.config?.method,
@@ -55,21 +110,69 @@ api.interceptors.response.use(
       message: error.message
     });
 
-    // Handle 401 errors
-    if (error.response?.status === 401) {
+    // Handle 401 errors (token expired)
+    if (error.response?.status === 401 && !originalRequest._retry) {
       const isAuthMeRequest = error.config?.url?.includes('/auth/me');
       const isLoginRequest = error.config?.url?.includes('/auth/login');
+      const isRefreshRequest = error.config?.url?.includes('/auth/refresh');
       const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login';
       
-      // Clear stored auth token on 401
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('authToken');
-        sessionStorage.removeItem('authToken');
+      // Don't try to refresh token for these requests
+      if (isAuthMeRequest || isLoginRequest || isRefreshRequest || isLoginPage) {
+        TokenManager.clearTokens();
+        return Promise.reject(error);
       }
+
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = TokenManager.getRefreshToken();
       
-      // Don't redirect if we're checking auth status, logging in, or already on login page
-      if (!isAuthMeRequest && !isLoginRequest && !isLoginPage) {
-        console.log('401 unauthorized, redirecting to login');
+      if (refreshToken) {
+        try {
+          console.log('Attempting to refresh token...');
+          const response = await axios.post(`${API_URL}/auth/refresh`, {
+            refreshToken: refreshToken
+          });
+
+          const { tokens } = response.data.data;
+          TokenManager.setTokens(tokens);
+          
+          console.log('Token refreshed successfully');
+          processQueue(null, tokens.accessToken);
+          
+          // Retry original request with new token
+          originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
+          return api(originalRequest);
+          
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          processQueue(refreshError, null);
+          TokenManager.clearTokens();
+          
+          // Redirect to login
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      } else {
+        // No refresh token available
+        TokenManager.clearTokens();
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }
@@ -80,15 +183,19 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API calls with improved error handling
+// Auth API calls updated for JWT
 export const authAPI = {
   login: async (credentials) => {
     try {
       const response = await api.post('/auth/login', credentials);
-      // Store token if provided
-      if (response.data?.token) {
-        localStorage.setItem('authToken', response.data.token);
+      
+      // Handle new JWT response format
+      if (response.data?.success && response.data?.data?.tokens) {
+        const { tokens } = response.data.data;
+        TokenManager.setTokens(tokens);
+        console.log('Tokens stored successfully');
       }
+      
       return response;
     } catch (error) {
       console.error('Login error:', error.response?.data || error.message);
@@ -98,20 +205,41 @@ export const authAPI = {
   
   logout: async () => {
     try {
-      const response = await api.post('/auth/logout');
-      // Clear stored token
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('authToken');
-        sessionStorage.removeItem('authToken');
+      const token = TokenManager.getAccessToken();
+      if (token) {
+        await api.post('/auth/logout', {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
       }
-      return response;
     } catch (error) {
       console.error('Logout error:', error);
-      // Clear token even if logout request fails
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('authToken');
-        sessionStorage.removeItem('authToken');
+      // Continue with logout even if API call fails
+    } finally {
+      // Always clear tokens on logout
+      TokenManager.clearTokens();
+    }
+  },
+  
+  refreshToken: async () => {
+    try {
+      const refreshToken = TokenManager.getRefreshToken();
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
       }
+      
+      const response = await api.post('/auth/refresh', {
+        refreshToken: refreshToken
+      });
+      
+      if (response.data?.success && response.data?.data?.tokens) {
+        const { tokens } = response.data.data;
+        TokenManager.setTokens(tokens);
+        return tokens;
+      }
+      
+      throw new Error('Invalid refresh response');
+    } catch (error) {
+      TokenManager.clearTokens();
       throw error;
     }
   },
@@ -187,5 +315,8 @@ export const adminAPI = {
   getStats: (params) => api.get('/api/admin/stats', { params }),
   getHealth: () => api.get('/api/admin/health'),
 };
+
+// Export TokenManager for use in other files if needed
+export { TokenManager };
 
 export default api;
