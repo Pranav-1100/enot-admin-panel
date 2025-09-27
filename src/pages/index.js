@@ -137,7 +137,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
           <p className="mt-2 text-sm text-gray-700">
-            Welcome to the E° ENOT admin panel. Here's what's happening with your store today.
+            Welcome to the E° ENOT admin panel. Here&apos;s what&apos;s happening with your store today.
           </p>
         </div>
 
