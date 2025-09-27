@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -32,23 +33,7 @@ export default function ProductsIndex() {
     totalPages: 0
   });
 
-  useEffect(() => {
-    fetchProducts();
-    fetchFiltersData();
-  }, [pagination.page, filters]);
-
-  useEffect(() => {
-    const debouncedSearch = debounce(() => {
-      setPagination(prev => ({ ...prev, page: 1 }));
-      fetchProducts();
-    }, 500);
-
-    if (searchQuery !== undefined) {
-      debouncedSearch();
-    }
-  }, [searchQuery]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -70,9 +55,9 @@ export default function ProductsIndex() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, searchQuery, filters]);
 
-  const fetchFiltersData = async () => {
+  const fetchFiltersData = useCallback(async () => {
     try {
       const [categoriesRes, brandsRes] = await Promise.all([
         categoriesAPI.getAll(),
@@ -83,7 +68,23 @@ export default function ProductsIndex() {
     } catch (error) {
       console.error('Error fetching filters data:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchFiltersData();
+  }, [fetchProducts, fetchFiltersData]);
+
+  useEffect(() => {
+    const debouncedSearch = debounce(() => {
+      setPagination(prev => ({ ...prev, page: 1 }));
+      fetchProducts();
+    }, 500);
+
+    if (searchQuery !== undefined) {
+      debouncedSearch();
+    }
+  }, [searchQuery, fetchProducts]);
 
   const handleDelete = async (productId) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
@@ -252,10 +253,12 @@ export default function ProductsIndex() {
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-12 w-12">
                               {product.images?.[0] ? (
-                                <img
+                                <Image
                                   className="h-12 w-12 rounded-lg object-cover"
                                   src={product.images[0].url}
                                   alt={product.name}
+                                  width={48}
+                                  height={48}
                                 />
                               ) : (
                                 <div className="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">

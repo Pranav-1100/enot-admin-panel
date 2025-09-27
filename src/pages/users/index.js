@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import { 
   MagnifyingGlassIcon, 
   UserIcon, 
@@ -28,22 +29,7 @@ export default function UsersIndex() {
     totalPages: 0
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, [pagination.page, filters]);
-
-  useEffect(() => {
-    const debouncedSearch = debounce(() => {
-      setPagination(prev => ({ ...prev, page: 1 }));
-      fetchUsers();
-    }, 500);
-
-    if (searchQuery !== undefined) {
-      debouncedSearch();
-    }
-  }, [searchQuery]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -65,7 +51,22 @@ export default function UsersIndex() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, searchQuery, filters]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    const debouncedSearch = debounce(() => {
+      setPagination(prev => ({ ...prev, page: 1 }));
+      fetchUsers();
+    }, 500);
+
+    if (searchQuery !== undefined) {
+      debouncedSearch();
+    }
+  }, [searchQuery, fetchUsers]);
 
   const handleStatusUpdate = async (userId, isActive, userType) => {
     try {
@@ -248,10 +249,12 @@ export default function UsersIndex() {
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-12 w-12">
                               {user.avatar ? (
-                                <img
+                                <Image
                                   className="h-12 w-12 rounded-full object-cover"
                                   src={user.avatar.url}
                                   alt={`${user.firstName} ${user.lastName}`}
+                                  width={48}
+                                  height={48}
                                 />
                               ) : (
                                 <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">

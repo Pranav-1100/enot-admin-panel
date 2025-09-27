@@ -6,6 +6,7 @@ import { ArrowLeftIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline
 import { productsAPI, categoriesAPI, brandsAPI } from '@/lib/api';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { handleAPIError, generateSlug, validateFile } from '@/lib/utils';
+import Image from 'next/image';
 
 export default function CreateProduct() {
   const router = useRouter();
@@ -372,11 +373,13 @@ export default function CreateProduct() {
                     <div className="grid grid-cols-2 gap-2">
                       {selectedImages.map((file, index) => (
                         <div key={index} className="relative">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={file.name}
-                            className="w-full h-24 object-cover rounded-lg"
-                          />
+                          <Image
+  src={URL.createObjectURL(file)}
+  alt={file.name}
+  className="w-full h-24 object-cover rounded-lg"
+  width={96}
+  height={96}
+/>
                           <button
                             type="button"
                             onClick={() => removeImage(index)}

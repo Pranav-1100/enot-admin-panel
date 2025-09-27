@@ -405,7 +405,7 @@ export default function Settings() {
           <div className="ml-3">
             <h3 className="text-sm font-medium text-blue-800">Privacy Notice</h3>
             <p className="mt-2 text-sm text-blue-700">
-              Analytics tracking helps improve your store's performance. All data is processed according to privacy regulations.
+            Analytics tracking helps improve your store&apos;s performance. All data is processed according to privacy regulations.
             </p>
           </div>
         </div>
