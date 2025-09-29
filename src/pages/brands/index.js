@@ -24,10 +24,16 @@ export default function BrandsIndex() {
         search: searchQuery 
       });
       
-      console.log('Brands API response:', response.data); // Debug log
+      console.log('Brands API response:', response.data);
       
-      // Fix: Access the correct path for brands data
-      setBrands(response.data.data || response.data.brands || []);
+      // Handle nested data structure correctly - try multiple possible paths
+      const brandsData = response.data.data?.brands || 
+                        response.data.data || 
+                        response.data.brands || 
+                        [];
+      
+      console.log('Brands data extracted:', brandsData);
+      setBrands(brandsData);
     } catch (error) {
       console.error('Error fetching brands:', error);
     } finally {
@@ -70,8 +76,11 @@ export default function BrandsIndex() {
           createdBrand = { id: brand.id };
         } else {
           const response = await brandsAPI.create(formData);
-          // Fix: Handle different response structures
-          createdBrand = response.data.brand || response.data.data || response.data;
+          // Handle different response structures
+          createdBrand = response.data.brand || 
+                        response.data.data?.brand || 
+                        response.data.data || 
+                        response.data;
         }
 
         // Upload logo if provided
