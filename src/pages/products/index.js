@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import Image from 'next/image';
 import { 
   PlusIcon, 
   PencilIcon, 
   TrashIcon, 
   MagnifyingGlassIcon,
-  FunnelIcon,
   PhotoIcon 
 } from '@heroicons/react/24/outline';
 import { productsAPI, categoriesAPI, brandsAPI } from '@/lib/api';
@@ -44,11 +42,18 @@ export default function ProductsIndex() {
       };
 
       const response = await productsAPI.getAll(params);
-      setProducts(response.data.products || []);
+      
+      console.log('Products API response:', response.data);
+      
+      // FIX: Handle the correct response structure
+      const productsData = response.data.data || response.data.products || [];
+      const paginationData = response.data.pagination || {};
+      
+      setProducts(productsData);
       setPagination(prev => ({
         ...prev,
-        total: response.data.total || 0,
-        totalPages: response.data.totalPages || 0
+        total: paginationData.totalItems || 0,
+        totalPages: paginationData.totalPages || 0
       }));
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -63,8 +68,13 @@ export default function ProductsIndex() {
         categoriesAPI.getAll(),
         brandsAPI.getAll()
       ]);
-      setCategories(categoriesRes.data.categories || []);
-      setBrands(brandsRes.data.brands || []);
+      
+      // Handle nested data structures
+      const categoriesData = categoriesRes.data.data?.categories || categoriesRes.data.categories || [];
+      const brandsData = brandsRes.data.data?.brands || brandsRes.data.data || brandsRes.data.brands || [];
+      
+      setCategories(categoriesData);
+      setBrands(brandsData);
     } catch (error) {
       console.error('Error fetching filters data:', error);
     }
@@ -72,8 +82,11 @@ export default function ProductsIndex() {
 
   useEffect(() => {
     fetchProducts();
+  }, [fetchProducts]);
+
+  useEffect(() => {
     fetchFiltersData();
-  }, [fetchProducts, fetchFiltersData]);
+  }, []);
 
   useEffect(() => {
     const debouncedSearch = debounce(() => {
@@ -84,7 +97,7 @@ export default function ProductsIndex() {
     if (searchQuery !== undefined) {
       debouncedSearch();
     }
-  }, [searchQuery, fetchProducts]);
+  }, [searchQuery]);
 
   const handleDelete = async (productId) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
@@ -124,7 +137,7 @@ export default function ProductsIndex() {
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
             <p className="mt-2 text-sm text-gray-700">
-              Manage your product catalog
+              Manage your product catalog ({pagination.total} total)
             </p>
           </div>
           <Link
@@ -230,13 +243,13 @@ export default function ProductsIndex() {
                         Product
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category
+                        Category / Brand
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Price
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Stock
+                        Details
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
@@ -249,20 +262,18 @@ export default function ProductsIndex() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {products.map((product) => (
                       <tr key={product.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-12 w-12">
+                            <div className="flex-shrink-0 h-16 w-16">
                               {product.images?.[0] ? (
-                                <Image
-                                  className="h-12 w-12 rounded-lg object-cover"
+                                <img
+                                  className="h-16 w-16 rounded-lg object-cover"
                                   src={product.images[0].url}
                                   alt={product.name}
-                                  width={48}
-                                  height={48}
                                 />
                               ) : (
-                                <div className="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                                  <PhotoIcon className="h-6 w-6 text-gray-400" />
+                                <div className="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center">
+                                  <PhotoIcon className="h-8 w-8 text-gray-400" />
                                 </div>
                               )}
                             </div>
@@ -270,58 +281,137 @@ export default function ProductsIndex() {
                               <div className="text-sm font-medium text-gray-900">
                                 {product.name}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-xs text-gray-500">
                                 SKU: {product.sku}
                               </div>
+                              {product.sizeMl && (
+                                <div className="text-xs text-gray-400">
+                                  {product.sizeMl}ml
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
+                        
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
                             {product.category?.name || 'No Category'}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {formatCurrency(product.price)}
-                          </div>
-                          {product.comparePrice && product.comparePrice > product.price && (
-                            <div className="text-sm text-gray-500 line-through">
-                              {formatCurrency(product.comparePrice)}
+                          {product.brand && (
+                            <div className="text-xs text-gray-500">
+                              {product.brand.name}
                             </div>
                           )}
                         </td>
+                        
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {product.trackQuantity ? product.quantity || 0 : '∞'}
+                          <div className="text-sm font-medium text-gray-900">
+                            {formatCurrency(product.price)}
+                          </div>
+                          {product.comparePrice && product.comparePrice > product.price && (
+                            <>
+                              <div className="text-sm text-gray-500 line-through">
+                                {formatCurrency(product.comparePrice)}
+                              </div>
+                              <div className="text-xs text-green-600">
+                                {Math.round((1 - product.price / product.comparePrice) * 100)}% off
+                              </div>
+                            </>
+                          )}
+                        </td>
+                        
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <div className="space-y-1">
+                            <div className="flex items-center text-xs">
+                              <span className="font-medium">{product.gender || 'N/A'}</span>
+                            </div>
+                            {product.fragranceFamily && (
+                              <div className="text-xs text-gray-400 capitalize">
+                                {product.fragranceFamily}
+                              </div>
+                            )}
+                            {product.concentration && (
+                              <div className="text-xs text-gray-400 capitalize">
+                                {product.concentration.replace(/_/g, ' ')}
+                              </div>
+                            )}
+                            {product.inStock !== undefined && (
+                              <div className={`text-xs ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
+                                {product.inStock ? 'In Stock' : 'Out of Stock'}
+                              </div>
+                            )}
                           </div>
                         </td>
+                        
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            getStatusColor(product.isActive ? 'active' : 'inactive')
-                          }`}>
-                            {product.isActive ? 'Active' : 'Inactive'}
-                          </span>
+                          <div className="flex flex-col space-y-1">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              getStatusColor(product.isActive ? 'active' : 'inactive')
+                            }`}>
+                              {product.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                            
+                            {product.isFeatured && (
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Featured
+                              </span>
+                            )}
+                            
+                            {product.averageRating && parseFloat(product.averageRating) > 0 && (
+                              <div className="text-xs text-gray-500">
+                                ⭐ {parseFloat(product.averageRating).toFixed(1)} ({product.reviewCount})
+                              </div>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                          <Link
-                            href={`/products/${product.id}/edit`}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(product.id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
+                        
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end space-x-2">
+                            <Link
+                              href={`/products/${product.id}/edit`}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Edit Product"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(product.id)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Delete Product"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+
+              {/* Empty State */}
+              {products.length === 0 && (
+                <div className="text-center py-12">
+                  <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {searchQuery || filters.categoryId || filters.brandId
+                      ? 'Try adjusting your search or filters.'
+                      : 'Get started by creating a new product.'}
+                  </p>
+                  {!searchQuery && !filters.categoryId && !filters.brandId && (
+                    <div className="mt-6">
+                      <Link
+                        href="/products/create"
+                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                      >
+                        <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                        Add Product
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
@@ -361,6 +451,11 @@ export default function ProductsIndex() {
                         >
                           Previous
                         </button>
+                        
+                        <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                          Page {pagination.page} of {pagination.totalPages}
+                        </span>
+                        
                         <button
                           onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                           disabled={pagination.page >= pagination.totalPages}
