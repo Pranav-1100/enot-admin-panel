@@ -68,9 +68,11 @@ export default function CategoryForm({
   };
 
   const onFormSubmit = (data) => {
+    // FIX: Convert empty string to null for parentId
     const formData = {
       ...data,
-      sortOrder: parseInt(data.sortOrder) || 0
+      sortOrder: parseInt(data.sortOrder) || 0,
+      parentId: data.parentId || null  // Convert empty string to null
     };
 
     onSubmit({

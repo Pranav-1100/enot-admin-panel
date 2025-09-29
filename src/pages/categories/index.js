@@ -20,7 +20,11 @@ export default function CategoriesIndex() {
     try {
       setLoading(true);
       const response = await categoriesAPI.getAll({ flat: false, includeInactive: true });
-      setCategories(response.data.categories || []);
+      
+      // FIX 1: Handle nested data structure correctly
+      const categoriesData = response.data.data?.categories || response.data.categories || [];
+      console.log('Categories fetched:', categoriesData);
+      setCategories(categoriesData);
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -56,10 +60,17 @@ export default function CategoriesIndex() {
       setIsLoading(true);
 
       try {
+        // FIX 2: Convert empty string to null for parentId
+        const submitData = {
+          ...formData,
+          parentId: formData.parentId || null,  // Convert empty string to null
+          sortOrder: parseInt(formData.sortOrder) || 0
+        };
+
         if (category) {
-          await categoriesAPI.update(category.id, formData);
+          await categoriesAPI.update(category.id, submitData);
         } else {
-          await categoriesAPI.create(formData);
+          await categoriesAPI.create(submitData);
         }
         onSuccess();
         onClose();
@@ -203,7 +214,7 @@ export default function CategoriesIndex() {
           </td>
           <td className="px-6 py-4 whitespace-nowrap">
             <div className="text-sm text-gray-900">
-              {category.productsCount || 0} products
+              {category.productsCount || category.productCount || 0} products
             </div>
           </td>
           <td className="px-6 py-4 whitespace-nowrap">

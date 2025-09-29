@@ -19,7 +19,9 @@ export default function CreateCategory() {
   const fetchCategories = async () => {
     try {
       const response = await categoriesAPI.getAll();
-      setCategories(response.data.categories || []);
+      // Handle nested data structure correctly
+      const categoriesData = response.data.data?.categories || response.data.categories || [];
+      setCategories(categoriesData);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -30,10 +32,12 @@ export default function CreateCategory() {
       setLoading(true);
 
       const response = await categoriesAPI.create(categoryData);
-      const categoryId = response.data.category.id;
+      // Handle different response structures
+      const category = response.data.category || response.data.data?.category || response.data.data;
+      const categoryId = category.id;
 
       // Upload image if provided
-      if (newImage) {
+      if (newImage && categoryId) {
         const imageFormData = new FormData();
         imageFormData.append('image', newImage);
         await categoriesAPI.uploadImage(categoryId, imageFormData);
