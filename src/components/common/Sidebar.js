@@ -11,8 +11,8 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ChartBarIcon,
   Cog6ToothIcon,
-  DocumentTextIcon, // Added for Blog
 } from '@heroicons/react/24/outline';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { cn } from '@/lib/utils';
