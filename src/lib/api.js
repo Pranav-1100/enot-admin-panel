@@ -309,6 +309,25 @@ export const reviewsAPI = {
   delete: (id) => api.delete(`/api/reviews/${id}`),
 };
 
+// Blog API calls
+export const blogsAPI = {
+  // Admin routes
+  getAll: (params) => api.get('/api/admin/blogs', { params }),
+  getById: (id) => api.get(`/api/admin/blogs/${id}`),
+  create: (data) => api.post('/api/admin/blogs', data),
+  update: (id, data) => api.put(`/api/admin/blogs/${id}`, data),
+  delete: (id) => api.delete(`/api/admin/blogs/${id}`),
+  publish: (id) => api.post(`/api/admin/blogs/${id}/publish`),
+};
+
+// Blog Categories API calls
+export const blogCategoriesAPI = {
+  getAll: (params) => api.get('/api/admin/blog-categories', { params }),
+  create: (data) => api.post('/api/admin/blog-categories', data),
+  update: (id, data) => api.put(`/api/admin/blog-categories/${id}`, data),
+  delete: (id) => api.delete(`/api/admin/blog-categories/${id}`),
+};
+
 // Admin API calls
 export const adminAPI = {
   getDashboard: () => api.get('/api/admin/dashboard'),
