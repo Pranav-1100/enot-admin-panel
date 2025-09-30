@@ -11,6 +11,7 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ChartBarIcon,
   Cog6ToothIcon,
+  DocumentTextIcon, // Added for Blog
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Products', href: '/products', icon: CubeIcon },
   { name: 'Categories', href: '/categories', icon: TagIcon },
   { name: 'Brands', href: '/brands', icon: BuildingStorefrontIcon },
+  { name: 'Blog', href: '/blogs', icon: DocumentTextIcon }, // Added Blog
   { name: 'Orders', href: '/orders', icon: ShoppingBagIcon },
   { name: 'Users', href: '/users', icon: UsersIcon },
   { name: 'Reviews', href: '/reviews', icon: ChatBubbleBottomCenterTextIcon },
