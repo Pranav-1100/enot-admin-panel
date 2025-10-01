@@ -16,43 +16,93 @@ import { handleAPIError } from '@/lib/utils';
 
 export default function BlogPreview() {
   const router = useRouter();
-  const { slug } = router.query;
+  const { slug: id } = router.query; // Using 'id' but keeping param name as 'slug' for URL structure
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [relatedPosts, setRelatedPosts] = useState([]);
 
   useEffect(() => {
-    if (slug) {
-      fetchBlogBySlug();
+    if (id) {
+      console.log('=== PREVIEW PAGE DEBUG ===');
+      console.log('Router query:', router.query);
+      console.log('Extracted ID:', id);
+      console.log('ID type:', typeof id);
+      console.log('Is GUID format?', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+      console.log('=========================');
+      
+      fetchBlogById();
     }
-  }, [slug]);
+  }, [id]);
 
-  const fetchBlogBySlug = async () => {
+  const fetchBlogById = async () => {
     try {
       setLoading(true);
       
-      // Fetch all blogs and find by slug
-      const response = await blogsAPI.getAll({ status: 'all' });
-      const blogs = response.data.data?.data || [];
-      const foundBlog = blogs.find(b => b.slug === slug);
+      console.log('Fetching blog with ID:', id);
       
-      if (!foundBlog) {
-        throw new Error('Blog not found');
+      // Validate that we have a proper GUID
+      const isValidGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      
+      if (!isValidGuid) {
+        throw new Error(`Invalid blog ID format. Expected GUID, got: ${id}`);
       }
       
-      setBlog(foundBlog);
+      // Use the existing API configuration to ensure proper URL
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+      const fullUrl = `${API_URL}/api/admin/blogs/${id}`;
+      console.log('Making request to:', fullUrl);
       
-      // Get related posts (same category)
-      if (foundBlog.category) {
-        const related = blogs
-          .filter(b => b.id !== foundBlog.id && b.category?.id === foundBlog.category.id && b.status === 'published')
-          .slice(0, 3);
-        setRelatedPosts(related);
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Error response text:', errorText);
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Blog API response:', data);
+      
+      // Extract blog from response
+      const blogData = data.data?.blog || data.blog || data;
+      
+      if (!blogData) {
+        throw new Error('No blog data in response');
+      }
+      
+      console.log('Blog loaded successfully:', blogData.title);
+      setBlog(blogData);
+      
+      // Get related posts
+      if (blogData.category) {
+        try {
+          const relatedResponse = await blogsAPI.getAll({ 
+            status: 'published', 
+            categoryId: blogData.category.id 
+          });
+          const allBlogs = relatedResponse.data.data?.data || [];
+          const related = allBlogs
+            .filter(b => b.id !== blogData.id)
+            .slice(0, 3);
+          setRelatedPosts(related);
+        } catch (relatedError) {
+          console.log('Could not fetch related posts:', relatedError);
+          setRelatedPosts([]);
+        }
       }
       
     } catch (error) {
       console.error('Error fetching blog:', error);
-      alert(handleAPIError(error));
+      alert(`Error loading blog: ${error.message}`);
       router.push('/blogs');
     } finally {
       setLoading(false);
@@ -80,7 +130,7 @@ export default function BlogPreview() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900">Blog not found</h2>
-          <p className="mt-2 text-gray-600">The blog post you&apos;re looking for doesn&apos;t exist.</p>
+          <p className="mt-2 text-gray-600">The blog post you're looking for doesn't exist.</p>
           <Link 
             href="/blogs" 
             className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800"
@@ -236,7 +286,7 @@ export default function BlogPreview() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {relatedPosts.map((post) => (
                   <article key={post.id} className="group">
-                    <Link href={`/blog/${post.slug}`} className="block">
+                    <Link href={`/blogs/preview/${post.id}`} className="block">
                       {post.featuredImage ? (
                         <img
                           src={post.featuredImage}

@@ -199,10 +199,10 @@ export default function BlogTable({
                       )}
                       
                       <Link
-                        href={`/blogs/preview/${blog.slug}`}
+                        href={`/blogs/preview/${blog.id}`}
                         target="_blank"
                         className="text-purple-600 hover:text-purple-900"
-                        title="Preview how it looks"
+                        title={`Preview: ${blog.title}`}
                       >
                         <EyeIcon className="h-4 w-4" />
                       </Link>
