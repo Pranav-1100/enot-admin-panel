@@ -184,61 +184,68 @@ export default function BlogTable({
                     )}
                   </td>
                   
-                  {showActions && (
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        {blog.status === 'published' && (
-                          <a
-                            href={`${process.env.NEXT_PUBLIC_MAIN_SITE_URL || ''}/blog/${blog.slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-gray-600 hover:text-gray-900"
-                            title="View on site"
-                          >
-                            <EyeIcon className="h-4 w-4" />
-                          </a>
-                        )}
-                        
-                        <Link
-                          href={`/blogs/${blog.id}/edit`}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="Edit Blog"
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end space-x-2">
+                      {blog.status === 'published' && (
+                        <a
+                          href={`${process.env.NEXT_PUBLIC_MAIN_SITE_URL || ''}/blog/${blog.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-600 hover:text-gray-900"
+                          title="View on site"
                         >
-                          <PencilIcon className="h-4 w-4" />
-                        </Link>
-                        
-                        {blog.status === 'draft' && onPublish && (
-                          <button
-                            onClick={() => handlePublish(blog.id, blog.title)}
-                            className="text-green-600 hover:text-green-900"
-                            title="Publish Blog"
-                          >
-                            <RocketLaunchIcon className="h-4 w-4" />
-                          </button>
-                        )}
-                        
-                        {blog.status === 'published' && onUnpublish && (
-                          <button
-                            onClick={() => handleUnpublish(blog.id, blog.title)}
-                            className="text-orange-600 hover:text-orange-900"
-                            title="Unpublish Blog"
-                          >
-                            <EyeSlashIcon className="h-4 w-4" />
-                          </button>
-                        )}
-                        
-                        {onDelete && (
-                          <button
-                            onClick={() => handleDelete(blog.id, blog.title)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Delete Blog"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  )}
+                          <EyeIcon className="h-4 w-4" />
+                        </a>
+                      )}
+                      
+                      <Link
+                        href={`/blogs/preview/${blog.slug}`}
+                        target="_blank"
+                        className="text-purple-600 hover:text-purple-900"
+                        title="Preview how it looks"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                      </Link>
+                      
+                      <Link
+                        href={`/blogs/${blog.id}/edit`}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Edit Blog"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </Link>
+                      
+                      {blog.status === 'draft' && onPublish && (
+                        <button
+                          onClick={() => handlePublish(blog.id, blog.title)}
+                          className="text-green-600 hover:text-green-900"
+                          title="Publish Blog"
+                        >
+                          <RocketLaunchIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                      
+                      {blog.status === 'published' && onUnpublish && (
+                        <button
+                          onClick={() => handleUnpublish(blog.id, blog.title)}
+                          className="text-orange-600 hover:text-orange-900"
+                          title="Unpublish Blog"
+                        >
+                          <EyeSlashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                      
+                      {onDelete && (
+                        <button
+                          onClick={() => handleDelete(blog.id, blog.title)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete Blog"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
