@@ -130,7 +130,7 @@ export default function BlogPreview() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900">Blog not found</h2>
-          <p className="mt-2 text-gray-600">The blog post you're looking for doesn't exist.</p>
+          <p className="mt-2 text-gray-600">The blog post you&lsquo;re looking for doesn&lsquo;t exist.</p>
           <Link 
             href="/blogs" 
             className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800"
