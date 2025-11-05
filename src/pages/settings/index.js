@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { 
-  Cog6ToothIcon, 
-  BellIcon, 
+import {
+  Cog6ToothIcon,
+  BellIcon,
   CreditCardIcon,
   ShieldCheckIcon,
   GlobeAltIcon,
@@ -15,11 +15,13 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { handleAPIError } from '@/lib/utils';
+import { settingsAPI } from '@/lib/api';
 
 export default function Settings() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   
   const [settings, setSettings] = useState({
@@ -63,21 +65,35 @@ export default function Settings() {
     trackingEnabled: true
   });
 
-  const handleSave = async () => {
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
     try {
       setLoading(true);
-      // Here you would make API call to save settings
-      // await settingsAPI.update(settings);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const response = await settingsAPI.getAll();
+      const settingsData = response.data.data?.settings || response.data.settings || response.data;
+      if (settingsData && Object.keys(settingsData).length > 0) {
+        setSettings(prev => ({ ...prev, ...settingsData }));
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await settingsAPI.update(settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       alert(handleAPIError(error));
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -424,6 +440,14 @@ export default function Settings() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -442,10 +466,10 @@ export default function Settings() {
           
           <button
             onClick={handleSave}
-            disabled={loading}
+            disabled={saving || loading}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading && <LoadingSpinner size="sm" />}
+            {saving && <LoadingSpinner size="sm" />}
             {saved ? (
               <>
                 <CheckCircleIcon className="h-4 w-4 mr-2" />
