@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 // Create axios instance
 const api = axios.create({
@@ -290,10 +290,10 @@ export const brandsAPI = {
 
 // Orders API calls
 export const ordersAPI = {
-  getAll: (params) => api.get('/api/orders/admin/all', { params }),
-  getById: (id) => api.get(`/api/orders/${id}`),
-  updateStatus: (id, data) => api.put(`/api/orders/${id}/status`, data),
-  getStats: (params) => api.get('/api/orders/admin/stats', { params }),
+  getAll: (params) => api.get('/api/admin/orders', { params }),
+  getById: (id) => api.get(`/api/admin/orders/${id}`),
+  updateStatus: (id, data) => api.patch(`/api/admin/orders/${id}/status`, data),
+  getStats: (params) => api.get('/api/admin/orders/stats', { params }),
 };
 
 // Users API calls
@@ -305,27 +305,31 @@ export const usersAPI = {
 // Reviews API calls
 export const reviewsAPI = {
   getAll: (params) => api.get('/api/admin/reviews', { params }),
-  approve: (id, data) => api.put(`/api/admin/reviews/${id}/approve`, data),
-  delete: (id) => api.delete(`/api/reviews/${id}`),
+  approve: (id, data) => api.patch(`/api/admin/reviews/${id}/approve`, data),
+  delete: (id) => api.delete(`/api/admin/reviews/${id}`),
 };
 
 // Blog API calls
 export const blogsAPI = {
   // Admin routes
-  getAll: (params) => api.get('/api/admin/blogs', { params }),
-  getById: (id) => api.get(`/api/admin/blogs/${id}`),
-  create: (data) => api.post('/api/admin/blogs', data),
-  update: (id, data) => api.put(`/api/admin/blogs/${id}`, data),
-  delete: (id) => api.delete(`/api/admin/blogs/${id}`),
-  publish: (id) => api.post(`/api/admin/blogs/${id}/publish`),
+  getAll: (params) => api.get('/api/admin/blog/posts', { params }),
+  getById: (id) => api.get(`/api/admin/blog/posts/${id}`),
+  create: (data) => api.post('/api/admin/blog/posts', data),
+  update: (id, data) => api.patch(`/api/admin/blog/posts/${id}`, data),
+  delete: (id) => api.delete(`/api/admin/blog/posts/${id}`),
+  publish: (id) => api.post(`/api/admin/blog/posts/${id}/publish`),
+  uploadImage: (id, formData) => api.post(`/api/admin/blog/posts/${id}/image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
 };
 
 // Blog Categories API calls
 export const blogCategoriesAPI = {
-  getAll: (params) => api.get('/api/admin/blog-categories', { params }),
-  create: (data) => api.post('/api/admin/blog-categories', data),
-  update: (id, data) => api.put(`/api/admin/blog-categories/${id}`, data),
-  delete: (id) => api.delete(`/api/admin/blog-categories/${id}`),
+  getAll: (params) => api.get('/api/admin/blog/categories', { params }),
+  getById: (id) => api.get(`/api/admin/blog/categories/${id}`),
+  create: (data) => api.post('/api/admin/blog/categories', data),
+  update: (id, data) => api.patch(`/api/admin/blog/categories/${id}`, data),
+  delete: (id) => api.delete(`/api/admin/blog/categories/${id}`),
 };
 
 // Admin API calls
@@ -333,6 +337,108 @@ export const adminAPI = {
   getDashboard: () => api.get('/api/admin/dashboard'),
   getStats: (params) => api.get('/api/admin/stats', { params }),
   getHealth: () => api.get('/api/admin/health'),
+};
+
+// Tags API calls
+
+export const tagsAPI = {
+
+  getAll: (params) => api.get('/api/admin/tags', { params }),
+
+  getById: (id) => api.get(`/api/admin/tags/${id}`),
+
+  create: (data) => api.post('/api/admin/tags', data),
+
+  update: (id, data) => api.patch(`/api/admin/tags/${id}`, data),
+
+  delete: (id) => api.delete(`/api/admin/tags/${id}`),
+
+  getStats: () => api.get('/api/admin/tags/stats'),
+
+};
+
+ 
+
+// Coupons API calls
+
+export const couponsAPI = {
+
+  getAll: (params) => api.get('/api/admin/coupons', { params }),
+
+  getById: (id) => api.get(`/api/admin/coupons/${id}`),
+
+  create: (data) => api.post('/api/admin/coupons', data),
+
+  update: (id, data) => api.patch(`/api/admin/coupons/${id}`, data),
+
+  delete: (id) => api.delete(`/api/admin/coupons/${id}`),
+
+  getStats: (id) => api.get(`/api/admin/coupons/${id}/stats`),
+
+  validate: (code) => api.post('/api/coupons/validate', { code }),
+
+};
+
+ 
+
+// Inventory API calls
+
+export const inventoryAPI = {
+
+  getAll: (params) => api.get('/api/admin/inventory', { params }),
+
+  getLowStock: (params) => api.get('/api/admin/inventory/low-stock', { params }),
+
+  adjustStock: (data) => api.post('/api/admin/inventory/adjust', data),
+
+  bulkAdjust: (data) => api.post('/api/admin/inventory/bulk-adjust', data),
+
+  getMovements: (params) => api.get('/api/admin/inventory/movements', { params }),
+
+};
+
+ 
+
+// Settings API calls
+
+export const settingsAPI = {
+
+  getAll: () => api.get('/api/admin/settings'),
+
+  update: (data) => api.patch('/api/admin/settings', data),
+
+  reset: () => api.post('/api/admin/settings/reset'),
+
+};
+
+ 
+
+// Activity Logs API calls
+
+export const activityLogsAPI = {
+
+  getAll: (params) => api.get('/api/admin/activity-logs', { params }),
+
+};
+
+ 
+
+// Addresses API calls (for user addresses)
+
+export const addressesAPI = {
+
+  getAll: () => api.get('/api/addresses'),
+
+  getById: (id) => api.get(`/api/addresses/${id}`),
+
+  create: (data) => api.post('/api/addresses', data),
+
+  update: (id, data) => api.patch(`/api/addresses/${id}`, data),
+
+  delete: (id) => api.delete(`/api/addresses/${id}`),
+
+  setDefault: (id) => api.patch(`/api/addresses/${id}/default`),
+
 };
 
 // Export TokenManager for use in other files if needed

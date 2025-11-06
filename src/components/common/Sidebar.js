@@ -11,6 +11,11 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ChartBarIcon,
   Cog6ToothIcon,
+  TicketIcon,
+  ArchiveBoxIcon,
+  ClockIcon,
+  RectangleGroupIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
@@ -19,62 +24,195 @@ import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Products', href: '/products', icon: CubeIcon },
-  { name: 'Categories', href: '/categories', icon: TagIcon },
-  { name: 'Brands', href: '/brands', icon: BuildingStorefrontIcon },
-  { name: 'Blog', href: '/blogs', icon: DocumentTextIcon }, // Added Blog
+  {
+    name: 'Catalog',
+    icon: CubeIcon,
+    children: [
+      { name: 'Products', href: '/products', icon: CubeIcon },
+      { name: 'Categories', href: '/categories', icon: RectangleGroupIcon },
+      { name: 'Brands', href: '/brands', icon: BuildingStorefrontIcon },
+      { name: 'Tags', href: '/tags', icon: TagIcon },
+    ]
+  },
   { name: 'Orders', href: '/orders', icon: ShoppingBagIcon },
+  { name: 'Inventory', href: '/inventory', icon: ArchiveBoxIcon },
+  { name: 'Coupons', href: '/coupons', icon: TicketIcon },
   { name: 'Users', href: '/users', icon: UsersIcon },
   { name: 'Reviews', href: '/reviews', icon: ChatBubbleBottomCenterTextIcon },
+  { name: 'Blog', href: '/blogs', icon: DocumentTextIcon },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
+  { name: 'Activity Logs', href: '/activity-logs', icon: ClockIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ];
 
 function SidebarContent() {
   const router = useRouter();
 
+  const [openSubmenu, setOpenSubmenu] = useState('Catalog');
+
+ 
+
   const isActive = (href) => {
+
     if (href === '/') {
+
       return router.pathname === '/';
+
     }
+
     return router.pathname.startsWith(href);
+
   };
 
+ 
+
+  const isGroupActive = (children) => {
+
+    return children.some(child => isActive(child.href));
+
+  };
+
+ 
+
   return (
+
     <div className="flex flex-col h-full">
+
       {/* Logo */}
+
       <div className="flex items-center h-16 px-4 bg-blue-600">
+
         <div className="flex-shrink-0">
+
           <span className="text-2xl font-bold text-white">E°</span>
+
         </div>
+
         <div className="ml-3">
+
           <span className="text-white text-sm font-medium">ENOT Admin</span>
+
         </div>
+
       </div>
 
+ 
+
       {/* Navigation */}
+
       <nav className="flex-1 px-2 py-4 bg-gray-800 space-y-1 overflow-y-auto">
-        {navigation.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className={cn(
-              isActive(item.href)
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-              'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200'
-            )}
-          >
-            <item.icon
+
+        {navigation.map((item) => {
+
+          if (item.children) {
+
+            const isOpen = openSubmenu === item.name || isGroupActive(item.children);
+
+            return (
+
+              <div key={item.name}>
+
+                <button
+
+                  onClick={() => setOpenSubmenu(isOpen ? null : item.name)}
+
+                  className={cn(
+
+                    isGroupActive(item.children)
+
+                      ? 'bg-gray-900 text-white'
+
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+
+                    'group flex items-center w-full px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200'
+
+                  )}
+
+                >
+
+                  <item.icon
+
+                    className={cn(
+
+                      isGroupActive(item.children) ? 'text-gray-300' : 'text-gray-400 group-hover:text-gray-300',
+
+                      'mr-3 h-6 w-6 flex-shrink-0'
+
+                    )}
+
+                    aria-hidden="true"
+
+                  />
+
+                  {item.name}
+
+                  <ChevronDownIcon
+
+                    className={cn(
+
+                      isOpen ? 'rotate-180' : '',
+
+                      'ml-auto h-5 w-5 transform transition-transform duration-200'
+
+                    )}
+
+                  />
+
+                </button>
+
+                {isOpen && (
+
+                  <div className="mt-1 space-y-1 pl-11">
+
+                    {item.children.map((child) => (
+
+                      <Link
+
+                        key={child.name}
+
+                        href={child.href}
+
+                        className={cn(
+
+                          isActive(child.href)
+
+                            ? 'bg-gray-900 text-white'
+
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+
+                          'group flex items-center px-2 py-2 text-sm rounded-md transition-colors duration-200'
+                        )}
+                      >
+                        {child.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
               className={cn(
-                isActive(item.href) ? 'text-gray-300' : 'text-gray-400 group-hover:text-gray-300',
-                'mr-3 h-6 w-6 flex-shrink-0'
+                isActive(item.href)
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200'
               )}
-              aria-hidden="true"
-            />
-            {item.name}
-          </Link>
-        ))}
+            >
+              <item.icon
+                className={cn(
+                  isActive(item.href) ? 'text-gray-300' : 'text-gray-400 group-hover:text-gray-300',
+                  'mr-3 h-6 w-6 flex-shrink-0'
+                )}
+                aria-hidden="true"
+              />
+              {item.name}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Footer */}

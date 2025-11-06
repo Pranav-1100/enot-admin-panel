@@ -49,11 +49,15 @@ export default function Analytics() {
         adminAPI.getDashboard(),
         ordersAPI.getStats({ period: timeRange, groupBy: 'day' })
       ]);
-
-      setAnalyticsData(dashboardResponse.data);
-      setOrderStats(orderStatsResponse.data);
+      const dashData = dashboardResponse.data.data || dashboardResponse.data;
+      const statsData = orderStatsResponse.data.data || orderStatsResponse.data;
+      setAnalyticsData(dashData);
+      setOrderStats(statsData);
     } catch (error) {
       console.error('Error fetching analytics data:', error);
+      // Set empty data to prevent errors
+      setAnalyticsData({});
+      setOrderStats({});
     } finally {
       setLoading(false);
     }
