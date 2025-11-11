@@ -73,18 +73,39 @@ export default function InventoryIndex() {
 
       const response = await inventoryAPI.getAll(params);
 
+      console.log('Inventory API response:', response.data);
+
+      // FIX: Correct data path - response.data.data.data
       const inventoryData =
-        response.data.data?.inventory || response.data.inventory || [];
+        response.data.data?.data || response.data.data?.inventory || response.data.inventory || [];
 
       const paginationData =
         response.data.data?.pagination || response.data.pagination || {};
 
-      setInventory(inventoryData);
+      // Map the field names from API to what the UI expects
+      const mappedInventory = inventoryData.map(item => ({
+        id: item.id,
+        productId: item.productId,
+        name: item.productName, // API uses productName, UI expects name
+        sku: item.sku,
+        stock: item.availableQuantity, // API uses availableQuantity, UI expects stock
+        quantity: item.quantity,
+        reservedQuantity: item.reservedQuantity,
+        availableQuantity: item.availableQuantity,
+        trackQuantity: item.trackQuantity,
+        lowStockThreshold: item.lowStockThreshold,
+        isLowStock: item.isLowStock,
+        category: item.category,
+        brand: item.brand,
+        updatedAt: item.updatedAt
+      }));
+
+      setInventory(mappedInventory);
 
       setPagination((prev) => ({
         ...prev,
 
-        total: paginationData.totalItems || inventoryData.length,
+        total: paginationData.totalItems || mappedInventory.length,
 
         totalPages: paginationData.totalPages || 1,
       }));
@@ -102,9 +123,22 @@ export default function InventoryIndex() {
       const response = await inventoryAPI.getLowStock();
 
       const lowStockData =
-        response.data.data?.products || response.data.products || [];
+        response.data.data?.data || response.data.data?.products || response.data.products || [];
 
-      setLowStockItems(lowStockData);
+      // Map field names for low stock items
+      const mappedLowStock = lowStockData.map(item => ({
+        id: item.id,
+        productId: item.productId,
+        name: item.productName || item.name,
+        sku: item.sku,
+        stock: item.availableQuantity || item.stock,
+        quantity: item.quantity,
+        lowStockThreshold: item.lowStockThreshold,
+        category: item.category,
+        brand: item.brand
+      }));
+
+      setLowStockItems(mappedLowStock);
     } catch (error) {
       console.error("Error fetching low stock items:", error);
     }
