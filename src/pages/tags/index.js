@@ -148,23 +148,15 @@ export default function TagsIndex() {
   };
 
   const tagTypes = [
-    { value: "fragrance_family", label: "Fragrance Family" },
-
-    { value: "occasion", label: "Occasion" },
-
-    { value: "season", label: "Season" },
-
-    { value: "gender", label: "Gender" },
-
-    { value: "other", label: "Other" },
+    { value: "product", label: "Product" },
+    { value: "blog", label: "Blog" },
+    { value: "both", label: "Both (Product & Blog)" },
   ];
 
   const TagForm = ({ tag, onClose, onSuccess }) => {
     const [formData, setFormData] = useState({
       name: tag?.name || "",
-
-      type: tag?.type || "other",
-
+      type: tag?.type || "both",
       description: tag?.description || "",
     });
 
@@ -288,18 +280,12 @@ export default function TagsIndex() {
 
   const getTypeColor = (type) => {
     const colors = {
-      fragrance_family: "bg-purple-100 text-purple-800",
-
-      occasion: "bg-blue-100 text-blue-800",
-
-      season: "bg-green-100 text-green-800",
-
-      gender: "bg-pink-100 text-pink-800",
-
-      other: "bg-gray-100 text-gray-800",
+      product: "bg-blue-100 text-blue-800",
+      blog: "bg-purple-100 text-purple-800",
+      both: "bg-green-100 text-green-800",
     };
 
-    return colors[type] || colors.other;
+    return colors[type] || "bg-gray-100 text-gray-800";
   };
 
   const filteredTags = tags.filter((tag) => {
