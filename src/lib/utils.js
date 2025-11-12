@@ -140,18 +140,44 @@ export function cn(...classes) {
     return null;
   }
   
-  // Parse query params
+  // Parse query params - removes empty strings and undefined values
   export function parseQueryParams(query) {
     const params = {};
-    
+
     Object.keys(query).forEach(key => {
       const value = query[key];
-      if (value && value !== '' && value !== 'undefined') {
+      // Only include non-empty values
+      if (value !== '' && value !== null && value !== undefined && value !== 'undefined') {
         params[key] = value;
       }
     });
-  
+
     return params;
+  }
+
+  // Clean params for API calls - removes empty strings, converts booleans
+  export function cleanApiParams(params) {
+    const cleaned = {};
+
+    Object.keys(params).forEach(key => {
+      const value = params[key];
+
+      // Skip empty strings, null, undefined
+      if (value === '' || value === null || value === undefined || value === 'undefined') {
+        return;
+      }
+
+      // Convert string booleans to actual booleans
+      if (value === 'true') {
+        cleaned[key] = true;
+      } else if (value === 'false') {
+        cleaned[key] = false;
+      } else {
+        cleaned[key] = value;
+      }
+    });
+
+    return cleaned;
   }
   
   // Format file size

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { cleanApiParams } from './utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -59,17 +60,22 @@ const TokenManager = {
   }
 };
 
-// Request interceptor to add Authorization header
+// Request interceptor to add Authorization header and clean params
 api.interceptors.request.use(
   (config) => {
     console.log(`Making ${config.method?.toUpperCase()} request to: ${config.baseURL}${config.url}`);
-    
+
     // Add Authorization header with JWT token
     const token = TokenManager.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
+    // Clean query parameters - remove empty strings
+    if (config.params) {
+      config.params = cleanApiParams(config.params);
+    }
+
     return config;
   },
   (error) => {
@@ -256,7 +262,7 @@ export const productsAPI = {
   create: (data) => api.post('/api/products', data),
   update: (id, data) => api.put(`/api/products/${id}`, data),
   delete: (id) => api.delete(`/api/products/${id}`),
-  uploadImages: (id, formData) => api.post(`/api/products/${id}/images`, formData, {
+  uploadImages: (id, formData, imageType = 'gallery') => api.post(`/api/products/${id}/images?type=${imageType}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   getReviews: (id, params) => api.get(`/api/products/${id}/reviews`, { params }),
@@ -290,10 +296,10 @@ export const brandsAPI = {
 
 // Orders API calls
 export const ordersAPI = {
-  getAll: (params) => api.get('/api/admin/orders', { params }),
-  getById: (id) => api.get(`/api/admin/orders/${id}`),
-  updateStatus: (id, data) => api.patch(`/api/admin/orders/${id}/status`, data),
-  getStats: (params) => api.get('/api/admin/orders/stats', { params }),
+  getAll: (params) => api.get('/api/orders/admin/all', { params }),
+  getById: (id) => api.get(`/api/orders/${id}`),
+  updateStatus: (id, data) => api.put(`/api/orders/${id}/status`, data),
+  getStats: (params) => api.get('/api/orders/admin/stats', { params }),
 };
 
 // Users API calls
@@ -312,24 +318,24 @@ export const reviewsAPI = {
 // Blog API calls
 export const blogsAPI = {
   // Admin routes
-  getAll: (params) => api.get('/api/admin/blog/posts', { params }),
-  getById: (id) => api.get(`/api/admin/blog/posts/${id}`),
-  create: (data) => api.post('/api/admin/blog/posts', data),
-  update: (id, data) => api.patch(`/api/admin/blog/posts/${id}`, data),
-  delete: (id) => api.delete(`/api/admin/blog/posts/${id}`),
-  publish: (id) => api.post(`/api/admin/blog/posts/${id}/publish`),
-  uploadImage: (id, formData) => api.post(`/api/admin/blog/posts/${id}/image`, formData, {
+  getAll: (params) => api.get('/api/admin/blogs', { params }),
+  getById: (id) => api.get(`/api/admin/blogs/${id}`),
+  create: (data) => api.post('/api/admin/blogs', data),
+  update: (id, data) => api.put(`/api/admin/blogs/${id}`, data),
+  delete: (id) => api.delete(`/api/admin/blogs/${id}`),
+  publish: (id) => api.post(`/api/admin/blogs/${id}/publish`),
+  uploadImage: (id, formData) => api.post(`/api/admin/blogs/${id}/image`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
 };
 
 // Blog Categories API calls
 export const blogCategoriesAPI = {
-  getAll: (params) => api.get('/api/admin/blog/categories', { params }),
-  getById: (id) => api.get(`/api/admin/blog/categories/${id}`),
-  create: (data) => api.post('/api/admin/blog/categories', data),
-  update: (id, data) => api.patch(`/api/admin/blog/categories/${id}`, data),
-  delete: (id) => api.delete(`/api/admin/blog/categories/${id}`),
+  getAll: (params) => api.get('/api/admin/blog-categories', { params }),
+  getById: (id) => api.get(`/api/admin/blog-categories/${id}`),
+  create: (data) => api.post('/api/admin/blog-categories', data),
+  update: (id, data) => api.put(`/api/admin/blog-categories/${id}`, data),
+  delete: (id) => api.delete(`/api/admin/blog-categories/${id}`),
 };
 
 // Admin API calls
@@ -340,21 +346,13 @@ export const adminAPI = {
 };
 
 // Tags API calls
-
 export const tagsAPI = {
-
-  getAll: (params) => api.get('/api/admin/tags', { params }),
-
-  getById: (id) => api.get(`/api/admin/tags/${id}`),
-
-  create: (data) => api.post('/api/admin/tags', data),
-
-  update: (id, data) => api.patch(`/api/admin/tags/${id}`, data),
-
-  delete: (id) => api.delete(`/api/admin/tags/${id}`),
-
-  getStats: () => api.get('/api/admin/tags/stats'),
-
+  getAll: (params) => api.get('/api/tags', { params }),
+  getById: (id) => api.get(`/api/tags/${id}`),
+  create: (data) => api.post('/api/tags', data),
+  update: (id, data) => api.put(`/api/tags/${id}`, data),
+  delete: (id) => api.delete(`/api/tags/${id}`),
+  getStats: () => api.get('/api/tags/admin/stats'),
 };
 
  

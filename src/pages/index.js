@@ -57,15 +57,35 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch dashboard overview
-      const [dashboardResponse, statsResponse] = await Promise.all([
-        adminAPI.getDashboard(),
-        ordersAPI.getStats({ groupBy: 'day' })
-      ]);
 
-      setDashboardData(dashboardResponse.data);
-      setOrderStats(statsResponse.data);
+      // Fetch dashboard overview - handle each API call separately
+      try {
+        const dashboardResponse = await adminAPI.getDashboard();
+        // Backend returns data in response.data.data format
+        setDashboardData(dashboardResponse.data?.data || dashboardResponse.data);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        // Set empty dashboard data to avoid crashes
+        setDashboardData({
+          productsCount: 0,
+          ordersCount: 0,
+          usersCount: 0,
+          totalRevenue: 0,
+          recentOrders: []
+        });
+      }
+
+      // Fetch order stats - commented out as endpoint doesn't exist yet
+      // TODO: Uncomment when /api/admin/orders/stats endpoint is implemented
+      // try {
+      //   const statsResponse = await ordersAPI.getStats({ groupBy: 'day' });
+      //   // Backend returns data in response.data.data format
+      //   setOrderStats(statsResponse.data?.data || statsResponse.data);
+      // } catch (error) {
+      //   console.error('Error fetching order stats:', error);
+      //   // Don't crash if stats endpoint doesn't exist
+      //   setOrderStats(null);
+      // }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
