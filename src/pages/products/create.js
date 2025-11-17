@@ -675,7 +675,7 @@ export default function CreateProduct() {
               placeholder='Enter valid JSON or leave as {}'
             />
             <p className="mt-2 text-xs text-gray-500">
-              💡 Leave as <code className="bg-gray-100 px-1 rounded">{'{}'}</code> if you don't need custom metadata
+              💡 Leave as <code className="bg-gray-100 px-1 rounded">{'{}'}</code> if you don&apos;t need custom metadata
             </p>
           </div>
 

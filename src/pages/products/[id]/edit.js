@@ -755,7 +755,7 @@ export default function EditProduct() {
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="text-md font-medium text-gray-900 mb-4">Fragrance Notes</h3>
               <p className="text-sm text-gray-500 mb-4">
-                Enter fragrance notes separated by commas (e.g., "Bergamot, Lemon, Pink Pepper")
+                Enter fragrance notes separated by commas (e.g., &quot;Bergamot, Lemon, Pink Pepper&quot;)
               </p>
 
               <div className="space-y-4">
@@ -863,7 +863,7 @@ export default function EditProduct() {
               placeholder='Enter valid JSON or leave as {}'
             />
             <p className="mt-2 text-xs text-gray-500">
-              💡 Leave as <code className="bg-gray-100 px-1 rounded">{'{}'}</code> if you don't need custom metadata
+              💡 Leave as <code className="bg-gray-100 px-1 rounded">{'{}'}</code> if you don&apos;t need custom metadata
             </p>
           </div>
 

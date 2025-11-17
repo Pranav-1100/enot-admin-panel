@@ -287,7 +287,7 @@ export default function ProductsIndex() {
               <span className="text-sm text-gray-600">Active filters:</span>
               {searchQuery && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                  Search: "{searchQuery}"
+                  Search: &quot;{searchQuery}&quot;
                 </span>
               )}
               {filters.categoryId && (
