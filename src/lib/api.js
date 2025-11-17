@@ -439,6 +439,33 @@ export const addressesAPI = {
 
 };
 
+// Site Settings API calls (public site configuration)
+export const siteSettingsAPI = {
+  get: () => api.get('/api/admin/site-settings'),
+  update: (data) => api.put('/api/admin/site-settings', data),
+};
+
+// Banners API calls (promotional banners)
+export const bannersAPI = {
+  getAll: () => api.get('/api/admin/banners'),
+  create: (data) => api.post('/api/admin/banners', data),
+  update: (id, data) => api.put(`/api/admin/banners/${id}`, data),
+  delete: (id) => api.delete(`/api/admin/banners/${id}`),
+};
+
+// Footer Management API calls
+export const footerAPI = {
+  // Sections
+  getSections: () => api.get('/api/admin/footer'),
+  createSection: (data) => api.post('/api/admin/footer/sections', data),
+  updateSection: (id, data) => api.put(`/api/admin/footer/sections/${id}`, data),
+  deleteSection: (id) => api.delete(`/api/admin/footer/sections/${id}`),
+  // Links
+  createLink: (data) => api.post('/api/admin/footer/links', data),
+  updateLink: (id, data) => api.put(`/api/admin/footer/links/${id}`, data),
+  deleteLink: (id) => api.delete(`/api/admin/footer/links/${id}`),
+};
+
 // Export TokenManager for use in other files if needed
 export { TokenManager };
 

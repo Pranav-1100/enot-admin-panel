@@ -15,7 +15,10 @@ import {
   ArchiveBoxIcon,
   ClockIcon,
   RectangleGroupIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  MegaphoneIcon,
+  GlobeAltIcon,
+  Bars3BottomLeftIcon
 } from '@heroicons/react/24/outline';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
@@ -40,6 +43,15 @@ const navigation = [
   { name: 'Users', href: '/users', icon: UsersIcon },
   { name: 'Reviews', href: '/reviews', icon: ChatBubbleBottomCenterTextIcon },
   { name: 'Blog', href: '/blogs', icon: DocumentTextIcon },
+  {
+    name: 'Site Management',
+    icon: GlobeAltIcon,
+    children: [
+      { name: 'Site Settings', href: '/site-settings', icon: Cog6ToothIcon },
+      { name: 'Banners', href: '/banners', icon: MegaphoneIcon },
+      { name: 'Footer', href: '/footer', icon: Bars3BottomLeftIcon },
+    ]
+  },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
   { name: 'Activity Logs', href: '/activity-logs', icon: ClockIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
