@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function VariantsManager({ variants = [], onChange }) {
   const [showForm, setShowForm] = useState(false);
@@ -10,8 +11,24 @@ export default function VariantsManager({ variants = [], onChange }) {
     comparePrice: '',
     sizeMl: '',
     concentration: '',
-    position: 0
+    position: 0,
+    imagePreview: null
   });
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, imagePreview: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData({ ...formData, imagePreview: null });
+  };
 
   const handleAdd = () => {
     if (!formData.name || !formData.sku || !formData.price) {
@@ -53,7 +70,8 @@ export default function VariantsManager({ variants = [], onChange }) {
     setFormData({
       ...variant,
       price: (variant.price / 100).toFixed(2),
-      comparePrice: variant.comparePrice ? (variant.comparePrice / 100).toFixed(2) : ''
+      comparePrice: variant.comparePrice ? (variant.comparePrice / 100).toFixed(2) : '',
+      imagePreview: variant.imagePreview || null
     });
     setEditingIndex(index);
     setShowForm(true);
@@ -67,7 +85,8 @@ export default function VariantsManager({ variants = [], onChange }) {
       comparePrice: '',
       sizeMl: '',
       concentration: '',
-      position: 0
+      position: 0,
+      imagePreview: null
     });
     setShowForm(false);
     setEditingIndex(null);
@@ -97,22 +116,31 @@ export default function VariantsManager({ variants = [], onChange }) {
         <div className="border rounded-lg divide-y">
           {variants.map((variant, index) => (
             <div key={index} className="p-4 flex items-center justify-between hover:bg-gray-50">
-              <div className="flex-1">
-                <div className="flex items-center space-x-3">
-                  <span className="font-medium text-gray-900">{variant.name}</span>
-                  <span className="text-sm text-gray-500">{variant.sku}</span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    ${(variant.price / 100).toFixed(2)}
-                  </span>
-                  {variant.comparePrice && (
-                    <span className="text-xs text-gray-400 line-through">
-                      ${(variant.comparePrice / 100).toFixed(2)}
+              <div className="flex items-center space-x-4 flex-1">
+                {variant.imagePreview && (
+                  <img
+                    src={variant.imagePreview}
+                    alt={variant.name}
+                    className="h-12 w-12 rounded-lg object-cover border border-gray-200"
+                  />
+                )}
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3">
+                    <span className="font-medium text-gray-900">{variant.name}</span>
+                    <span className="text-sm text-gray-500">{variant.sku}</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      ${(variant.price / 100).toFixed(2)}
                     </span>
-                  )}
-                </div>
-                <div className="mt-1 text-sm text-gray-500">
-                  {variant.sizeMl && `${variant.sizeMl}ml`}
-                  {variant.concentration && ` • ${variant.concentration}`}
+                    {variant.comparePrice && (
+                      <span className="text-xs text-gray-400 line-through">
+                        ${(variant.comparePrice / 100).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 text-sm text-gray-500">
+                    {variant.sizeMl && `${variant.sizeMl}ml`}
+                    {variant.concentration && ` • ${variant.concentration}`}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
@@ -225,6 +253,47 @@ export default function VariantsManager({ variants = [], onChange }) {
                 <option value="attar">Attar</option>
               </select>
             </div>
+          </div>
+
+          {/* Variant Image */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Variant Image <span className="text-gray-400">(Optional)</span>
+            </label>
+            {formData.imagePreview ? (
+              <div className="relative inline-block">
+                <img
+                  src={formData.imagePreview}
+                  alt="Variant preview"
+                  className="h-24 w-24 rounded-lg object-cover border-2 border-gray-200"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center w-full">
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-white hover:bg-gray-50">
+                  <div className="flex flex-col items-center justify-center pt-3 pb-4">
+                    <PhotoIcon className="h-8 w-8 text-gray-400 mb-1" />
+                    <p className="text-xs text-gray-500">Upload variant image</p>
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              </div>
+            )}
+            <p className="mt-1 text-xs text-gray-500">
+              Specific image for this variant (e.g., different bottle size)
+            </p>
           </div>
 
           <div className="mt-4 flex justify-end space-x-3">

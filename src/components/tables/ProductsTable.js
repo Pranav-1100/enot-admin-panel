@@ -195,10 +195,10 @@ export default function ProductsTable({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-12 w-12">
-                        {product.images?.[0] ? (
+                        {product.primaryImage ? (
                           <img
                             className="h-12 w-12 rounded-lg object-cover"
-                            src={product.images[0].url}
+                            src={product.primaryImage}
                             alt={product.name}
                           />
                         ) : (
