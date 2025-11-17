@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { PlusIcon, PencilIcon, TrashIcon, PhotoIcon } from '@heroicons/react/24/outline';
@@ -53,7 +53,23 @@ export default function CategoriesIndex() {
       metaDescription: category?.metaDescription || '',
       isActive: category?.isActive !== false
     });
+    const [imagePreview, setImagePreview] = useState(category?.imageData || null);
     const [isLoading, setIsLoading] = useState(false);
+
+    const handleImageChange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const removeImage = () => {
+      setImagePreview(null);
+    };
 
     const handleSubmit = async (e) => {
       e.preventDefault();
@@ -64,7 +80,8 @@ export default function CategoriesIndex() {
         const submitData = {
           ...formData,
           parentId: formData.parentId || null,  // Convert empty string to null
-          sortOrder: parseInt(formData.sortOrder) || 0
+          sortOrder: parseInt(formData.sortOrder) || 0,
+          imageData: imagePreview || null
         };
 
         if (category) {
@@ -108,6 +125,42 @@ export default function CategoriesIndex() {
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category Image</label>
+              {imagePreview ? (
+                <div className="relative inline-block">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="h-32 w-32 rounded-lg object-cover border-2 border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <PhotoIcon className="h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">Click to upload image</p>
+                      <p className="text-xs text-gray-400">PNG, JPG, GIF up to 5MB</p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                  </label>
+                </div>
+              )}
             </div>
 
             <div>
@@ -189,32 +242,37 @@ export default function CategoriesIndex() {
 
   const renderCategories = (categories, level = 0) => {
     return categories.map(category => (
-      <div key={category.id}>
+      <React.Fragment key={category.id}>
         <tr className="hover:bg-gray-50">
-          <td className="px-6 py-4 whitespace-nowrap">
+          <td className="px-6 py-4">
             <div className="flex items-center" style={{ marginLeft: `${level * 20}px` }}>
               <div className="flex-shrink-0 h-12 w-12">
-                {category.image ? (
+                {category.imageData ? (
                   <img
-                    className="h-12 w-12 rounded-lg object-cover"
-                    src={category.image.url}
+                    className="h-12 w-12 rounded-lg object-cover border border-gray-200"
+                    src={category.imageData}
                     alt={category.name}
                   />
                 ) : (
-                  <div className="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                    <PhotoIcon className="h-6 w-6 text-gray-400" />
+                  <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center border border-gray-200">
+                    <PhotoIcon className="h-6 w-6 text-gray-500" />
                   </div>
                 )}
               </div>
-              <div className="ml-4">
-                <div className="text-sm font-medium text-gray-900">{category.name}</div>
-                <div className="text-sm text-gray-500">{category.slug}</div>
+              <div className="ml-3 min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-semibold text-gray-900">{category.name}</div>
+                  <div className="text-xs text-gray-500 font-mono bg-gray-50 px-2 py-0.5 rounded">{category.slug}</div>
+                </div>
+                {category.description && (
+                  <div className="text-xs text-gray-600 mt-0.5 truncate max-w-md">{category.description}</div>
+                )}
               </div>
             </div>
           </td>
           <td className="px-6 py-4 whitespace-nowrap">
             <div className="text-sm text-gray-900">
-              {category.productsCount || category.productCount || 0} products
+              {category.productsCount || category.productCount || 0}
             </div>
           </td>
           <td className="px-6 py-4 whitespace-nowrap">
@@ -227,25 +285,29 @@ export default function CategoriesIndex() {
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
             {formatRelativeTime(category.createdAt)}
           </td>
-          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-            <button
-              onClick={() => setEditingCategory(category)}
-              className="text-blue-600 hover:text-blue-900"
-            >
-              <PencilIcon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => handleDelete(category.id)}
-              className="text-red-600 hover:text-red-900"
-            >
-              <TrashIcon className="h-4 w-4" />
-            </button>
+          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setEditingCategory(category)}
+                className="text-blue-600 hover:text-blue-900 p-1"
+                title="Edit"
+              >
+                <PencilIcon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleDelete(category.id)}
+                className="text-red-600 hover:text-red-900 p-1"
+                title="Delete"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </div>
           </td>
         </tr>
-        {category.children && category.children.length > 0 && 
+        {category.children && category.children.length > 0 &&
           renderCategories(category.children, level + 1)
         }
-      </div>
+      </React.Fragment>
     ));
   };
 
