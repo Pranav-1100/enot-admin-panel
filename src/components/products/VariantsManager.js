@@ -317,7 +317,7 @@ export default function VariantsManager({ variants = [], onChange }) {
       {variants.length === 0 && !showForm && (
         <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
           <p className="text-sm text-gray-500">
-            No variants added yet. Click "Add Variant" to offer different sizes or options.
+            No variants added yet. Click &quot;Add Variant&quot; to offer different sizes or options.
           </p>
           <p className="text-xs text-gray-400 mt-2">
             Example: Add variants for 5.5ML, 12ML, 50ML sizes with different prices

@@ -108,7 +108,7 @@ export default function ImageUploadSections({ productId, onImagesUploaded }) {
             Upload lifestyle photos, usage instructions, ingredient benefits. These appear within the product description section.
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            Unlimited • Where they appear: Product description section, "How to Use", benefits/features
+            Unlimited • Where they appear: Product description section, &quot;How to Use&quot;, benefits/features
           </p>
         </div>
         <input
