@@ -104,27 +104,27 @@ export default function BlogTable({
                         <img
                           src={blog.featuredImage}
                           alt={blog.title}
-                          className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
+                          className="h-16 w-16 rounded-lg object-cover border border-gray-200 shadow-sm flex-shrink-0"
                         />
                       ) : (
-                        <div className="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
-                          <DocumentTextIcon className="h-8 w-8 text-gray-400" />
+                        <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center border border-gray-200 shadow-sm flex-shrink-0">
+                          <DocumentTextIcon className="h-8 w-8 text-indigo-500" />
                         </div>
                       )}
                       <div className="ml-4">
                         <Link
                           href={`/blogs/${blog.id}/edit`}
-                          className="text-sm font-medium text-blue-600 hover:text-blue-900 hover:underline cursor-pointer"
+                          className="text-sm font-semibold text-blue-600 hover:text-blue-900 hover:underline cursor-pointer"
                         >
                           {truncate(blog.title, 60)}
                         </Link>
                         {blog.excerpt && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-gray-600 mt-1 line-clamp-2">
                             {truncate(blog.excerpt, 80)}
                           </div>
                         )}
-                        <div className="text-xs text-gray-400 mt-1">
-                          Slug: {blog.slug}
+                        <div className="text-xs text-gray-500 font-mono bg-gray-50 px-2 py-0.5 rounded inline-block mt-1">
+                          {blog.slug}
                         </div>
                       </div>
                     </div>

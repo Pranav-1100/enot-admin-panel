@@ -61,33 +61,38 @@ export default function BrandsIndex() {
       foundedYear: brand?.foundedYear || '',
       isActive: brand?.isActive !== false
     });
+    const [logoPreview, setLogoPreview] = useState(brand?.logoData || brand?.logo?.url || null);
     const [isLoading, setIsLoading] = useState(false);
-    const [logoFile, setLogoFile] = useState(null);
+
+    const handleLogoChange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setLogoPreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const removeLogo = () => {
+      setLogoPreview(null);
+    };
 
     const handleSubmit = async (e) => {
       e.preventDefault();
       setIsLoading(true);
 
       try {
-        let createdBrand;
-        
-        if (brand) {
-          await brandsAPI.update(brand.id, formData);
-          createdBrand = { id: brand.id };
-        } else {
-          const response = await brandsAPI.create(formData);
-          // Handle different response structures
-          createdBrand = response.data.brand || 
-                        response.data.data?.brand || 
-                        response.data.data || 
-                        response.data;
-        }
+        const submitData = {
+          ...formData,
+          logoData: logoPreview || null
+        };
 
-        // Upload logo if provided
-        if (logoFile && createdBrand.id) {
-          const logoFormData = new FormData();
-          logoFormData.append('logo', logoFile);
-          await brandsAPI.uploadLogo(createdBrand.id, logoFormData);
+        if (brand) {
+          await brandsAPI.update(brand.id, submitData);
+        } else {
+          await brandsAPI.create(submitData);
         }
 
         onSuccess();
@@ -168,20 +173,37 @@ export default function BrandsIndex() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Logo</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setLogoFile(e.target.files[0])}
-                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              />
-              {logoFile && (
-                <div className="mt-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Brand Logo</label>
+              {logoPreview ? (
+                <div className="relative inline-block">
                   <img
-                    src={URL.createObjectURL(logoFile)}
-                    alt="Logo preview"
-                    className="h-16 w-16 object-cover rounded"
+                    src={logoPreview}
+                    alt="Preview"
+                    className="h-32 w-32 rounded-lg object-cover border-2 border-gray-200"
                   />
+                  <button
+                    type="button"
+                    onClick={removeLogo}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <BuildingStorefrontIcon className="h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">Click to upload logo</p>
+                      <p className="text-xs text-gray-400">PNG, JPG, SVG up to 5MB</p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                    />
+                  </label>
                 </div>
               )}
             </div>
@@ -272,28 +294,30 @@ export default function BrandsIndex() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0 h-16 w-16">
-                        {brand.logo ? (
+                        {brand.logoData || brand.logo?.url ? (
                           <img
-                            className="h-16 w-16 rounded-lg object-cover"
-                            src={brand.logo.url}
+                            className="h-16 w-16 rounded-lg object-cover border border-gray-200 shadow-sm"
+                            src={brand.logoData || brand.logo.url}
                             alt={brand.name}
                           />
                         ) : (
-                          <div className="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center">
-                            <BuildingStorefrontIcon className="h-8 w-8 text-gray-400" />
+                          <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center border border-gray-200 shadow-sm">
+                            <BuildingStorefrontIcon className="h-8 w-8 text-purple-500" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-medium text-gray-900 truncate">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate">
                           {brand.name}
                         </h3>
-                        {brand.country && (
-                          <p className="text-sm text-gray-500">{brand.country}</p>
-                        )}
-                        {brand.foundedYear && (
-                          <p className="text-xs text-gray-400">Founded {brand.foundedYear}</p>
-                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          {brand.country && (
+                            <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded">{brand.country}</span>
+                          )}
+                          {brand.foundedYear && (
+                            <span className="text-xs text-gray-400">Est. {brand.foundedYear}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex space-x-2">
