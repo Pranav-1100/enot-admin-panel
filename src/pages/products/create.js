@@ -57,7 +57,8 @@ export default function CreateProduct() {
     concentrationPercentage: '',
     specifications: '{}', // JSON string
     trustBadges: '[]', // JSON array string
-    recommendations: '{}' // JSON string
+    recommendations: '{}', // JSON string
+    publishedAt: '' // Date when product goes live
   });
 
   const [variants, setVariants] = useState([]);
@@ -943,6 +944,22 @@ export default function CreateProduct() {
                     <label className="ml-2 block text-sm text-gray-900">
                       Requires shipping
                     </label>
+                  </div>
+
+                  <div className="pt-3 border-t border-gray-200">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Publish Date
+                    </label>
+                    <input
+                      type="datetime-local"
+                      name="publishedAt"
+                      value={formData.publishedAt}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Leave empty to publish immediately when activated
+                    </p>
                   </div>
                 </div>
               </div>
