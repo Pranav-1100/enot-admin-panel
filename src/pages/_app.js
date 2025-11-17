@@ -5,6 +5,7 @@ import '@/styles/globals.css';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/common/Layout';
 import { PageSpinner } from '@/components/common/LoadingSpinner';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -60,17 +61,19 @@ function MyApp({ Component, pageProps }) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <AuthProvider>
-        {isLoginPage ? (
-          <Component {...pageProps} />
-        ) : (
-          <ProtectedRoute>
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
-          </ProtectedRoute>
-        )}
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          {isLoginPage ? (
+            <Component {...pageProps} />
+          ) : (
+            <ProtectedRoute>
+              <Layout>
+                <Component {...pageProps} />
+              </Layout>
+            </ProtectedRoute>
+          )}
+        </AuthProvider>
+      </ErrorBoundary>
     </>
   );
 }

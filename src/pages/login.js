@@ -34,7 +34,7 @@ export default function Login() {
 
       if (accessToken && refreshToken) {
         console.log('OAuth tokens received, storing...');
-        
+
         // Store tokens
         TokenManager.setTokens({
           accessToken,
@@ -44,7 +44,7 @@ export default function Login() {
 
         // Clean URL
         window.history.replaceState({}, document.title, window.location.pathname);
-        
+
         // Redirect to dashboard
         router.replace('/');
         return;
@@ -83,7 +83,7 @@ export default function Login() {
       console.log('Submitting login with:', formData);
       const result = await login(formData);
       console.log('Login result:', result);
-      
+
       if (result.success) {
         // Don't redirect here, let useEffect handle it after state updates
         console.log('Login successful, waiting for auth state update...');

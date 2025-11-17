@@ -183,10 +183,77 @@ export function cn(...classes) {
   // Format file size
   export function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
-  
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  /**
+   * Normalize API response to handle inconsistent backend response structures
+   * Handles multiple possible response formats:
+   * - response.data.data
+   * - response.data.items
+   * - response.data.products/blogs/etc
+   * - response.data directly
+   *
+   * @param {Object} response - Axios response object
+   * @param {String} dataKey - Optional key to look for (e.g., 'products', 'blogs')
+   * @returns {Object} - Normalized data with items and pagination
+   */
+  export function normalizeApiResponse(response, dataKey = null) {
+    const responseData = response.data;
+
+    // Try different possible data locations
+    let items = null;
+    let pagination = null;
+
+    // Check for nested data.data structure
+    if (responseData.data) {
+      if (Array.isArray(responseData.data)) {
+        items = responseData.data;
+      } else if (responseData.data.data && Array.isArray(responseData.data.data)) {
+        items = responseData.data.data;
+        pagination = responseData.data.pagination;
+      } else if (dataKey && responseData.data[dataKey]) {
+        items = responseData.data[dataKey];
+      } else if (responseData.data.items) {
+        items = responseData.data.items;
+      } else {
+        // If data is an object with a specific key
+        items = responseData.data;
+      }
+    }
+
+    // Check for direct key (products, blogs, etc)
+    if (!items && dataKey && responseData[dataKey]) {
+      items = responseData[dataKey];
+    }
+
+    // Check for items key
+    if (!items && responseData.items) {
+      items = responseData.items;
+    }
+
+    // Fallback to responseData itself if it's an array
+    if (!items && Array.isArray(responseData)) {
+      items = responseData;
+    }
+
+    // Get pagination info
+    if (!pagination) {
+      pagination = responseData.pagination || responseData.data?.pagination || {
+        totalItems: items?.length || 0,
+        totalPages: 1,
+        currentPage: 1,
+        limit: items?.length || 20
+      };
+    }
+
+    return {
+      items: items || [],
+      pagination: pagination
+    };
   }

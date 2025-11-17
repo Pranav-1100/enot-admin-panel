@@ -13,13 +13,23 @@ import { adminAPI, ordersAPI } from '@/lib/api';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 
-const StatCard = ({ title, value, change, changeType, icon: Icon, color }) => (
-  <div className="bg-white overflow-hidden shadow rounded-lg">
-    <div className="p-5">
-      <div className="flex items-center">
-        <div className="flex-shrink-0">
-          <Icon className={`h-6 w-6 text-${color}-600`} aria-hidden="true" />
-        </div>
+const StatCard = ({ title, value, change, changeType, icon: Icon, color }) => {
+  // Define complete class strings for Tailwind JIT compiler
+  const iconColorClasses = {
+    blue: 'text-blue-600',
+    green: 'text-green-600',
+    purple: 'text-purple-600',
+    yellow: 'text-yellow-600',
+    red: 'text-red-600'
+  };
+
+  return (
+    <div className="bg-white overflow-hidden shadow rounded-lg">
+      <div className="p-5">
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            <Icon className={`h-6 w-6 ${iconColorClasses[color] || 'text-gray-600'}`} aria-hidden="true" />
+          </div>
         <div className="ml-5 w-0 flex-1">
           <dl>
             <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
@@ -43,7 +53,8 @@ const StatCard = ({ title, value, change, changeType, icon: Icon, color }) => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null);
