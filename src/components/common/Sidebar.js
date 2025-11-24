@@ -18,7 +18,10 @@ import {
   ChevronDownIcon,
   MegaphoneIcon,
   GlobeAltIcon,
-  Bars3BottomLeftIcon
+  Bars3BottomLeftIcon,
+  PhotoIcon,
+  ChatBubbleLeftRightIcon,
+  SwatchIcon
 } from '@heroicons/react/24/outline';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
@@ -48,6 +51,9 @@ const navigation = [
     icon: GlobeAltIcon,
     children: [
       { name: 'Site Settings', href: '/site-settings', icon: Cog6ToothIcon },
+      { name: 'Hero Section', href: '/hero', icon: PhotoIcon },
+      { name: 'Testimonials', href: '/testimonials', icon: ChatBubbleLeftRightIcon },
+      { name: 'Theme Manager', href: '/theme', icon: SwatchIcon },
       { name: 'Banners', href: '/banners', icon: MegaphoneIcon },
       { name: 'Footer', href: '/footer', icon: Bars3BottomLeftIcon },
     ]
