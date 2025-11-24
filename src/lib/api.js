@@ -466,6 +466,43 @@ export const footerAPI = {
   deleteLink: (id) => api.delete(`/api/admin/footer/links/${id}`),
 };
 
+// Hero Section Management API calls
+export const heroAPI = {
+  getAll: () => api.get('/api/admin/hero'),
+  getActive: () => api.get('/api/admin/hero/active'),
+  getById: (id) => api.get(`/api/admin/hero/${id}`),
+  create: (data) => api.post('/api/admin/hero', data),
+  update: (id, data) => api.put(`/api/admin/hero/${id}`, data),
+  delete: (id) => api.delete(`/api/admin/hero/${id}`),
+  uploadBackground: (id, formData) => api.post(`/api/admin/hero/${id}/upload-background`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+};
+
+// Testimonials Management API calls
+export const testimonialsAPI = {
+  getAll: (params) => api.get('/api/admin/testimonials', { params }),
+  getPublic: (params) => api.get('/api/admin/testimonials/public', { params }),
+  getById: (id) => api.get(`/api/admin/testimonials/${id}`),
+  create: (data) => api.post('/api/admin/testimonials', data),
+  update: (id, data) => api.put(`/api/admin/testimonials/${id}`, data),
+  delete: (id) => api.delete(`/api/admin/testimonials/${id}`),
+  uploadPhoto: (id, formData) => api.post(`/api/admin/testimonials/${id}/upload-photo`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+};
+
+// Theme Settings API calls
+export const themeAPI = {
+  getAll: () => api.get('/api/admin/theme'),
+  getActive: () => api.get('/api/admin/theme/active'),
+  getById: (id) => api.get(`/api/admin/theme/${id}`),
+  create: (data) => api.post('/api/admin/theme', data),
+  update: (id, data) => api.put(`/api/admin/theme/${id}`, data),
+  delete: (id) => api.delete(`/api/admin/theme/${id}`),
+  activate: (id) => api.post(`/api/admin/theme/${id}/activate`),
+};
+
 // Export TokenManager for use in other files if needed
 export { TokenManager };
 
