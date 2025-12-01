@@ -20,7 +20,7 @@ export default function EditHero() {
     subtitle: '',
     description: '',
     background_image: '',
-    background_video: '',
+     background_video: '',
     overlay_opacity: 40,
     overlay_color: '#000000',
     text_color: '#FFFFFF',
